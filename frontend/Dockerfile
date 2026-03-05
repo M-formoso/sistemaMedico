@@ -6,11 +6,18 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
+# Instalar serve globalmente
+RUN npm install -g serve
+
 # Copiar el código
 COPY . .
 
-# Puerto
-EXPOSE 5173
+# Build de producción
+RUN npm run build
 
-# Comando por defecto
-CMD ["npm", "run", "dev", "--", "--host"]
+# Puerto dinámico de Railway
+ENV PORT=3000
+EXPOSE 3000
+
+# Servir archivos estáticos con puerto dinámico
+CMD sh -c "serve dist -s -l \$PORT"
