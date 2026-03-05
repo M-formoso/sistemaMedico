@@ -22,6 +22,7 @@ export default defineConfig({
   preview: {
     port: parseInt(process.env.PORT || '4173'),
     host: true,
+    allowedHosts: ['sistemamedico-production-860d.up.railway.app', '.railway.app'],
   },
   build: {
     outDir: 'dist',
