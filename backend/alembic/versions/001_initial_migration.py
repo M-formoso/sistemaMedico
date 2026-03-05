@@ -19,178 +19,202 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Crear enums
-    op.execute("CREATE TYPE estadopaciente AS ENUM ('activo', 'inactivo', 'nuevo')")
-    op.execute("CREATE TYPE rolusuario AS ENUM ('administradora', 'paciente')")
-    op.execute("CREATE TYPE estadosesion AS ENUM ('programada', 'confirmada', 'en_curso', 'completada', 'cancelada', 'no_asistio')")
-    op.execute("CREATE TYPE tipomovimiento AS ENUM ('entrada', 'salida', 'ajuste')")
-    op.execute("CREATE TYPE metodopago AS ENUM ('efectivo', 'transferencia', 'debito', 'credito', 'mercadopago')")
-    op.execute("CREATE TYPE categoriaegreso AS ENUM ('materiales', 'servicios', 'alquiler', 'sueldos', 'impuestos', 'marketing', 'mantenimiento', 'otros')")
-    op.execute("CREATE TYPE metodopagoegreso AS ENUM ('efectivo', 'transferencia', 'debito', 'credito', 'mercadopago')")
-    op.execute("CREATE TYPE tipofoto AS ENUM ('antes', 'despues', 'evolucion')")
+    # Crear enums (con IF NOT EXISTS para evitar errores si ya existen)
+    op.execute("DO $$ BEGIN CREATE TYPE estadopaciente AS ENUM ('activo', 'inactivo', 'nuevo'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;")
+    op.execute("DO $$ BEGIN CREATE TYPE rolusuario AS ENUM ('administradora', 'paciente'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;")
+    op.execute("DO $$ BEGIN CREATE TYPE estadosesion AS ENUM ('programada', 'confirmada', 'en_curso', 'completada', 'cancelada', 'no_asistio'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;")
+    op.execute("DO $$ BEGIN CREATE TYPE tipomovimiento AS ENUM ('entrada', 'salida', 'ajuste'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;")
+    op.execute("DO $$ BEGIN CREATE TYPE metodopago AS ENUM ('efectivo', 'transferencia', 'debito', 'credito', 'mercadopago'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;")
+    op.execute("DO $$ BEGIN CREATE TYPE categoriaegreso AS ENUM ('materiales', 'servicios', 'alquiler', 'sueldos', 'impuestos', 'marketing', 'mantenimiento', 'otros'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;")
+    op.execute("DO $$ BEGIN CREATE TYPE metodopagoegreso AS ENUM ('efectivo', 'transferencia', 'debito', 'credito', 'mercadopago'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;")
+    op.execute("DO $$ BEGIN CREATE TYPE tipofoto AS ENUM ('antes', 'despues', 'evolucion'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;")
 
     # Tabla pacientes
-    op.create_table(
-        'pacientes',
-        sa.Column('id', sa.Integer(), primary_key=True, index=True),
-        sa.Column('nombre', sa.String(100), nullable=False),
-        sa.Column('apellido', sa.String(100), nullable=False),
-        sa.Column('dni', sa.String(20), unique=True, nullable=True, index=True),
-        sa.Column('fecha_nacimiento', sa.Date(), nullable=True),
-        sa.Column('telefono', sa.String(30), nullable=True),
-        sa.Column('email', sa.String(255), nullable=True),
-        sa.Column('direccion', sa.String(500), nullable=True),
-        sa.Column('antecedentes', sa.Text(), nullable=True),
-        sa.Column('alergias', sa.Text(), nullable=True),
-        sa.Column('medicacion_actual', sa.Text(), nullable=True),
-        sa.Column('notas_medicas', sa.Text(), nullable=True),
-        sa.Column('estado', sa.Enum('activo', 'inactivo', 'nuevo', name='estadopaciente'), default='nuevo'),
-        sa.Column('activo', sa.Boolean(), default=True),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.func.now()),
-        sa.Column('updated_at', sa.DateTime(), server_default=sa.func.now(), onupdate=sa.func.now()),
-    )
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS pacientes (
+            id SERIAL PRIMARY KEY,
+            nombre VARCHAR(100) NOT NULL,
+            apellido VARCHAR(100) NOT NULL,
+            dni VARCHAR(20) UNIQUE,
+            fecha_nacimiento DATE,
+            telefono VARCHAR(30),
+            email VARCHAR(255),
+            direccion VARCHAR(500),
+            antecedentes TEXT,
+            alergias TEXT,
+            medicacion_actual TEXT,
+            notas_medicas TEXT,
+            estado estadopaciente DEFAULT 'nuevo',
+            activo BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
 
     # Tabla usuarios
-    op.create_table(
-        'usuarios',
-        sa.Column('id', sa.Integer(), primary_key=True, index=True),
-        sa.Column('email', sa.String(255), unique=True, nullable=False, index=True),
-        sa.Column('password_hash', sa.String(255), nullable=False),
-        sa.Column('nombre', sa.String(100), nullable=False),
-        sa.Column('rol', sa.Enum('administradora', 'paciente', name='rolusuario'), nullable=False, default='paciente'),
-        sa.Column('paciente_id', sa.Integer(), sa.ForeignKey('pacientes.id'), nullable=True),
-        sa.Column('activo', sa.Boolean(), default=True),
-        sa.Column('ultimo_acceso', sa.DateTime(), nullable=True),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.func.now()),
-        sa.Column('updated_at', sa.DateTime(), server_default=sa.func.now(), onupdate=sa.func.now()),
-    )
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id SERIAL PRIMARY KEY,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            password_hash VARCHAR(255) NOT NULL,
+            nombre VARCHAR(100) NOT NULL,
+            rol rolusuario NOT NULL DEFAULT 'paciente',
+            paciente_id INTEGER REFERENCES pacientes(id),
+            activo BOOLEAN DEFAULT TRUE,
+            ultimo_acceso TIMESTAMP,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
 
     # Tabla tratamientos
-    op.create_table(
-        'tratamientos',
-        sa.Column('id', sa.Integer(), primary_key=True, index=True),
-        sa.Column('nombre', sa.String(255), nullable=False, index=True),
-        sa.Column('descripcion', sa.Text(), nullable=True),
-        sa.Column('precio_lista', sa.Numeric(10, 2), nullable=True),
-        sa.Column('duracion_minutos', sa.Integer(), nullable=True),
-        sa.Column('zona_corporal', sa.String(100), nullable=True),
-        sa.Column('sesiones_recomendadas', sa.Integer(), nullable=True),
-        sa.Column('activo', sa.Boolean(), default=True),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.func.now()),
-        sa.Column('updated_at', sa.DateTime(), server_default=sa.func.now(), onupdate=sa.func.now()),
-    )
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS tratamientos (
+            id SERIAL PRIMARY KEY,
+            nombre VARCHAR(255) NOT NULL,
+            descripcion TEXT,
+            precio_lista NUMERIC(10, 2),
+            duracion_minutos INTEGER,
+            zona_corporal VARCHAR(100),
+            sesiones_recomendadas INTEGER,
+            activo BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
 
     # Tabla materiales
-    op.create_table(
-        'materiales',
-        sa.Column('id', sa.Integer(), primary_key=True, index=True),
-        sa.Column('nombre', sa.String(255), nullable=False, index=True),
-        sa.Column('descripcion', sa.Text(), nullable=True),
-        sa.Column('codigo', sa.String(50), unique=True, nullable=True, index=True),
-        sa.Column('unidad_medida', sa.String(50), nullable=False, default='unidades'),
-        sa.Column('stock_actual', sa.Numeric(10, 3), nullable=False, default=0),
-        sa.Column('stock_minimo', sa.Numeric(10, 3), default=0),
-        sa.Column('precio_costo', sa.Numeric(12, 2), nullable=True),
-        sa.Column('proveedor', sa.String(255), nullable=True),
-        sa.Column('activo', sa.Boolean(), default=True),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.func.now()),
-        sa.Column('updated_at', sa.DateTime(), server_default=sa.func.now(), onupdate=sa.func.now()),
-    )
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS materiales (
+            id SERIAL PRIMARY KEY,
+            nombre VARCHAR(255) NOT NULL,
+            descripcion TEXT,
+            codigo VARCHAR(50) UNIQUE,
+            unidad_medida VARCHAR(50) NOT NULL DEFAULT 'unidades',
+            stock_actual NUMERIC(10, 3) NOT NULL DEFAULT 0,
+            stock_minimo NUMERIC(10, 3) DEFAULT 0,
+            precio_costo NUMERIC(12, 2),
+            proveedor VARCHAR(255),
+            activo BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
 
     # Tabla sesiones
-    op.create_table(
-        'sesiones',
-        sa.Column('id', sa.Integer(), primary_key=True, index=True),
-        sa.Column('paciente_id', sa.Integer(), sa.ForeignKey('pacientes.id'), nullable=False, index=True),
-        sa.Column('tratamiento_id', sa.Integer(), sa.ForeignKey('tratamientos.id'), nullable=False),
-        sa.Column('fecha', sa.Date(), nullable=False, index=True),
-        sa.Column('hora_inicio', sa.Time(), nullable=True),
-        sa.Column('hora_fin', sa.Time(), nullable=True),
-        sa.Column('estado', sa.Enum('programada', 'confirmada', 'en_curso', 'completada', 'cancelada', 'no_asistio', name='estadosesion'), default='programada'),
-        sa.Column('precio_cobrado', sa.Numeric(12, 2), nullable=True),
-        sa.Column('descuento_aplicado', sa.Numeric(5, 2), default=0),
-        sa.Column('notas', sa.Text(), nullable=True),
-        sa.Column('notas_internas', sa.Text(), nullable=True),
-        sa.Column('created_by', sa.Integer(), sa.ForeignKey('usuarios.id'), nullable=True),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.func.now()),
-        sa.Column('updated_at', sa.DateTime(), server_default=sa.func.now(), onupdate=sa.func.now()),
-    )
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS sesiones (
+            id SERIAL PRIMARY KEY,
+            paciente_id INTEGER NOT NULL REFERENCES pacientes(id),
+            tratamiento_id INTEGER NOT NULL REFERENCES tratamientos(id),
+            fecha DATE NOT NULL,
+            hora_inicio TIME,
+            hora_fin TIME,
+            estado estadosesion DEFAULT 'programada',
+            precio_cobrado NUMERIC(12, 2),
+            descuento_aplicado NUMERIC(5, 2) DEFAULT 0,
+            notas TEXT,
+            notas_internas TEXT,
+            created_by INTEGER REFERENCES usuarios(id),
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
 
     # Tabla sesiones_materiales (relación many-to-many)
-    op.create_table(
-        'sesiones_materiales',
-        sa.Column('id', sa.Integer(), primary_key=True, index=True),
-        sa.Column('sesion_id', sa.Integer(), sa.ForeignKey('sesiones.id'), nullable=False),
-        sa.Column('material_id', sa.Integer(), sa.ForeignKey('materiales.id'), nullable=False),
-        sa.Column('cantidad', sa.Numeric(10, 3), nullable=False),
-        sa.Column('costo_unitario', sa.Numeric(12, 2), nullable=True),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.func.now()),
-    )
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS sesiones_materiales (
+            id SERIAL PRIMARY KEY,
+            sesion_id INTEGER NOT NULL REFERENCES sesiones(id),
+            material_id INTEGER NOT NULL REFERENCES materiales(id),
+            cantidad NUMERIC(10, 3) NOT NULL,
+            costo_unitario NUMERIC(12, 2),
+            created_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
 
     # Tabla movimientos_stock
-    op.create_table(
-        'movimientos_stock',
-        sa.Column('id', sa.Integer(), primary_key=True, index=True),
-        sa.Column('material_id', sa.Integer(), sa.ForeignKey('materiales.id'), nullable=False, index=True),
-        sa.Column('tipo', sa.Enum('entrada', 'salida', 'ajuste', name='tipomovimiento'), nullable=False),
-        sa.Column('cantidad', sa.Numeric(10, 3), nullable=False),
-        sa.Column('stock_anterior', sa.Numeric(10, 3), nullable=False),
-        sa.Column('stock_nuevo', sa.Numeric(10, 3), nullable=False),
-        sa.Column('referencia_tipo', sa.String(50), nullable=True),
-        sa.Column('referencia_id', sa.Integer(), nullable=True),
-        sa.Column('observaciones', sa.Text(), nullable=True),
-        sa.Column('created_by', sa.Integer(), sa.ForeignKey('usuarios.id'), nullable=True),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.func.now()),
-    )
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS movimientos_stock (
+            id SERIAL PRIMARY KEY,
+            material_id INTEGER NOT NULL REFERENCES materiales(id),
+            tipo tipomovimiento NOT NULL,
+            cantidad NUMERIC(10, 3) NOT NULL,
+            stock_anterior NUMERIC(10, 3) NOT NULL,
+            stock_nuevo NUMERIC(10, 3) NOT NULL,
+            referencia_tipo VARCHAR(50),
+            referencia_id INTEGER,
+            observaciones TEXT,
+            created_by INTEGER REFERENCES usuarios(id),
+            created_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
 
     # Tabla fotos
-    op.create_table(
-        'fotos',
-        sa.Column('id', sa.Integer(), primary_key=True, index=True),
-        sa.Column('paciente_id', sa.Integer(), sa.ForeignKey('pacientes.id'), nullable=False, index=True),
-        sa.Column('sesion_id', sa.Integer(), sa.ForeignKey('sesiones.id'), nullable=True),
-        sa.Column('url', sa.String(500), nullable=False),
-        sa.Column('public_id', sa.String(255), nullable=True),
-        sa.Column('tipo', sa.Enum('antes', 'despues', 'evolucion', name='tipofoto'), default='evolucion'),
-        sa.Column('zona', sa.String(100), nullable=True),
-        sa.Column('fecha', sa.Date(), nullable=True),
-        sa.Column('visible_paciente', sa.Boolean(), default=False),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.func.now()),
-    )
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS fotos (
+            id SERIAL PRIMARY KEY,
+            paciente_id INTEGER NOT NULL REFERENCES pacientes(id),
+            sesion_id INTEGER REFERENCES sesiones(id),
+            url VARCHAR(500) NOT NULL,
+            public_id VARCHAR(255),
+            tipo tipofoto DEFAULT 'evolucion',
+            zona VARCHAR(100),
+            fecha DATE,
+            visible_paciente BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
 
     # Tabla pagos
-    op.create_table(
-        'pagos',
-        sa.Column('id', sa.Integer(), primary_key=True, index=True),
-        sa.Column('paciente_id', sa.Integer(), sa.ForeignKey('pacientes.id'), nullable=False, index=True),
-        sa.Column('sesion_id', sa.Integer(), sa.ForeignKey('sesiones.id'), nullable=True),
-        sa.Column('monto', sa.Numeric(12, 2), nullable=False),
-        sa.Column('metodo_pago', sa.Enum('efectivo', 'transferencia', 'debito', 'credito', 'mercadopago', name='metodopago'), nullable=False, default='efectivo'),
-        sa.Column('fecha', sa.Date(), nullable=False, index=True),
-        sa.Column('concepto', sa.String(500), nullable=True),
-        sa.Column('notas', sa.Text(), nullable=True),
-        sa.Column('numero_recibo', sa.String(50), nullable=True),
-        sa.Column('created_by', sa.Integer(), sa.ForeignKey('usuarios.id'), nullable=True),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.func.now()),
-        sa.Column('updated_at', sa.DateTime(), server_default=sa.func.now(), onupdate=sa.func.now()),
-    )
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS pagos (
+            id SERIAL PRIMARY KEY,
+            paciente_id INTEGER NOT NULL REFERENCES pacientes(id),
+            sesion_id INTEGER REFERENCES sesiones(id),
+            monto NUMERIC(12, 2) NOT NULL,
+            metodo_pago metodopago NOT NULL DEFAULT 'efectivo',
+            fecha DATE NOT NULL,
+            concepto VARCHAR(500),
+            notas TEXT,
+            numero_recibo VARCHAR(50),
+            created_by INTEGER REFERENCES usuarios(id),
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
 
     # Tabla egresos
-    op.create_table(
-        'egresos',
-        sa.Column('id', sa.Integer(), primary_key=True, index=True),
-        sa.Column('concepto', sa.String(500), nullable=False),
-        sa.Column('monto', sa.Numeric(12, 2), nullable=False),
-        sa.Column('categoria', sa.Enum('materiales', 'servicios', 'alquiler', 'sueldos', 'impuestos', 'marketing', 'mantenimiento', 'otros', name='categoriaegreso'), default='otros'),
-        sa.Column('metodo_pago', sa.Enum('efectivo', 'transferencia', 'debito', 'credito', 'mercadopago', name='metodopagoegreso'), default='efectivo'),
-        sa.Column('fecha', sa.Date(), nullable=False, index=True),
-        sa.Column('proveedor', sa.String(255), nullable=True),
-        sa.Column('numero_factura', sa.String(100), nullable=True),
-        sa.Column('notas', sa.Text(), nullable=True),
-        sa.Column('created_by', sa.Integer(), sa.ForeignKey('usuarios.id'), nullable=True),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.func.now()),
-        sa.Column('updated_at', sa.DateTime(), server_default=sa.func.now(), onupdate=sa.func.now()),
-    )
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS egresos (
+            id SERIAL PRIMARY KEY,
+            concepto VARCHAR(500) NOT NULL,
+            monto NUMERIC(12, 2) NOT NULL,
+            categoria categoriaegreso DEFAULT 'otros',
+            metodo_pago metodopagoegreso DEFAULT 'efectivo',
+            fecha DATE NOT NULL,
+            proveedor VARCHAR(255),
+            numero_factura VARCHAR(100),
+            notas TEXT,
+            created_by INTEGER REFERENCES usuarios(id),
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
+
+    # Crear índices si no existen
+    op.execute("CREATE INDEX IF NOT EXISTS ix_pacientes_dni ON pacientes(dni)")
+    op.execute("CREATE INDEX IF NOT EXISTS ix_usuarios_email ON usuarios(email)")
+    op.execute("CREATE INDEX IF NOT EXISTS ix_tratamientos_nombre ON tratamientos(nombre)")
+    op.execute("CREATE INDEX IF NOT EXISTS ix_materiales_nombre ON materiales(nombre)")
+    op.execute("CREATE INDEX IF NOT EXISTS ix_materiales_codigo ON materiales(codigo)")
+    op.execute("CREATE INDEX IF NOT EXISTS ix_sesiones_paciente_id ON sesiones(paciente_id)")
+    op.execute("CREATE INDEX IF NOT EXISTS ix_sesiones_fecha ON sesiones(fecha)")
+    op.execute("CREATE INDEX IF NOT EXISTS ix_pagos_paciente_id ON pagos(paciente_id)")
+    op.execute("CREATE INDEX IF NOT EXISTS ix_pagos_fecha ON pagos(fecha)")
+    op.execute("CREATE INDEX IF NOT EXISTS ix_egresos_fecha ON egresos(fecha)")
+    op.execute("CREATE INDEX IF NOT EXISTS ix_fotos_paciente_id ON fotos(paciente_id)")
+    op.execute("CREATE INDEX IF NOT EXISTS ix_movimientos_stock_material_id ON movimientos_stock(material_id)")
 
 
 def downgrade() -> None:
