@@ -5,7 +5,7 @@ nixPkgs = ["nodejs_20"]
 cmds = ["npm install"]
 
 [phases.build]
-cmds = ["npm run build"]
+cmds = ["npm run build && ls -la dist"]
 
 [start]
-cmd = "npm run preview"
+cmd = "serve dist -s -l ${PORT:-3000}"
