@@ -6,8 +6,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-# Instalar serve globalmente
-RUN npm install -g serve
+# Instalar http-server globalmente (más simple que serve)
+RUN npm install -g http-server
 
 # Copiar el código
 COPY . .
@@ -15,5 +15,5 @@ COPY . .
 # Build de producción
 RUN npm run build
 
-# Servir archivos estáticos - serve usa -p para puerto
-CMD ["sh", "-c", "serve dist -s -p ${PORT:-3000}"]
+# Servir archivos estáticos con http-server
+CMD ["sh", "-c", "http-server dist -p ${PORT:-3000} --proxy http://localhost:${PORT:-3000}?"]
