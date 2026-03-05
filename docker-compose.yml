@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: medestetica-db
+    environment:
+      POSTGRES_USER: medestetica
+      POSTGRES_PASSWORD: medestetica_pass
+      POSTGRES_DB: medestetica
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medestetica"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: medestetica-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: medestetica-backend
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://medestetica:medestetica_pass@db:5432/medestetica
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=dev-secret-key-change-in-production
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: medestetica-frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://localhost:8000/api/v1
+    command: npm run dev -- --host
+
+  celery:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: medestetica-celery
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://medestetica:medestetica_pass@db:5432/medestetica
+      - REDIS_URL=redis://redis:6379/0
+    command: celery -A app.core.celery_app worker --loglevel=info
+
+volumes:
+  postgres_data:
