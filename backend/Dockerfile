@@ -15,8 +15,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar el código
 COPY . .
 
-# Railway usa PORT dinámico
-ENV PORT=8000
-
-# Comando con puerto dinámico y migraciones
-CMD sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port \$PORT"
+# Comando simple - sin migraciones por ahora
+CMD ["sh", "-c", "echo 'PORT is:' $PORT && python -c 'print(\"Python works\")' && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
