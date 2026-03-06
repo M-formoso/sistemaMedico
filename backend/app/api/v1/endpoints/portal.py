@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.db.session import get_db
 from app.api.deps import get_current_paciente
 from app.models.paciente import Paciente
 from app.models.sesion import Sesion
+from app.models.tratamiento import Tratamiento
+from app.models.tipo_tratamiento import TipoTratamiento
 from app.models.foto import Foto
 from app.models.pago import Pago
 
@@ -25,12 +27,43 @@ def obtener_mi_historial(
     if not paciente:
         raise HTTPException(status_code=404, detail="Perfil de paciente no encontrado")
 
+    # Obtener tratamientos del paciente
+    tratamientos = db.query(Tratamiento).options(
+        joinedload(Tratamiento.tipo_tratamiento)
+    ).filter(
+        Tratamiento.paciente_id == current_user.paciente_id
+    ).all()
+
+    tratamientos_data = []
+    for t in tratamientos:
+        # Contar sesiones realizadas
+        sesiones_realizadas = db.query(Sesion).filter(
+            Sesion.tratamiento_id == t.id,
+            Sesion.estado == "completada"
+        ).count()
+
+        tratamientos_data.append({
+            "id": t.id,
+            "tipo_tratamiento_nombre": t.tipo_tratamiento.nombre if t.tipo_tratamiento else "Tratamiento",
+            "fecha_inicio": t.fecha_inicio,
+            "estado": t.estado,
+            "sesiones_realizadas": sesiones_realizadas,
+            "total_sesiones": t.cantidad_sesiones or 1,
+        })
+
     return {
-        "nombre": paciente.nombre_completo,
+        "id": paciente.id,
+        "nombre": paciente.nombre,
+        "apellido": paciente.apellido,
+        "email": paciente.email,
+        "telefono": paciente.telefono,
         "fecha_nacimiento": paciente.fecha_nacimiento,
+        "direccion": paciente.direccion,
         "antecedentes": paciente.antecedentes,
         "alergias": paciente.alergias,
         "medicacion_actual": paciente.medicacion_actual,
+        "notas_medicas": paciente.notas,
+        "tratamientos": tratamientos_data,
     }
 
 
@@ -65,7 +98,9 @@ def obtener_mis_fotos(
     current_user = Depends(get_current_paciente)
 ):
     """Obtener fotos autorizadas del paciente."""
-    fotos = db.query(Foto).filter(
+    fotos = db.query(Foto).options(
+        joinedload(Foto.tratamiento).joinedload(Tratamiento.tipo_tratamiento)
+    ).filter(
         Foto.paciente_id == current_user.paciente_id,
         Foto.visible_paciente == True  # Solo fotos autorizadas por la médica
     ).order_by(Foto.fecha.desc()).all()
@@ -77,6 +112,8 @@ def obtener_mis_fotos(
             "tipo": f.tipo,
             "zona": f.zona,
             "fecha": f.fecha,
+            "tratamiento_nombre": f.tratamiento.tipo_tratamiento.nombre if f.tratamiento and f.tratamiento.tipo_tratamiento else None,
+            "notas": f.notas,
         }
         for f in fotos
     ]
@@ -122,6 +159,18 @@ def obtener_mi_saldo(
         Pago.estado == EstadoPago.PENDIENTE
     ).scalar() or Decimal("0")
 
+    total_pagado = db.query(func.sum(Pago.monto)).filter(
+        Pago.paciente_id == current_user.paciente_id,
+        Pago.estado == EstadoPago.PAGADO
+    ).scalar() or Decimal("0")
+
+    # Total de tratamientos
+    total_tratamientos = db.query(func.sum(Tratamiento.precio_total)).filter(
+        Tratamiento.paciente_id == current_user.paciente_id
+    ).scalar() or Decimal("0")
+
     return {
         "saldo_pendiente": float(total_pendiente),
+        "total_pagado": float(total_pagado),
+        "total_tratamientos": float(total_tratamientos),
     }

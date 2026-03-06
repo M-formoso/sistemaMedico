@@ -19,6 +19,10 @@ import ConfiguracionPage from '@/pages/configuracion'
 
 // Portal Paciente
 import PortalHome from '@/pages/portal-paciente'
+import PortalTurnos from '@/pages/portal-paciente/turnos'
+import PortalHistorial from '@/pages/portal-paciente/historial'
+import PortalFotos from '@/pages/portal-paciente/fotos'
+import PortalPagos from '@/pages/portal-paciente/pagos'
 
 function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: string }) {
   const { isAuthenticated, user } = useAuthStore()
@@ -153,11 +157,51 @@ function App() {
 
         {/* Portal Paciente */}
         <Route
-          path="/portal/*"
+          path="/portal"
           element={
             <ProtectedRoute requiredRole="paciente">
               <PacienteLayout>
                 <PortalHome />
+              </PacienteLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/portal/turnos"
+          element={
+            <ProtectedRoute requiredRole="paciente">
+              <PacienteLayout>
+                <PortalTurnos />
+              </PacienteLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/portal/historial"
+          element={
+            <ProtectedRoute requiredRole="paciente">
+              <PacienteLayout>
+                <PortalHistorial />
+              </PacienteLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/portal/fotos"
+          element={
+            <ProtectedRoute requiredRole="paciente">
+              <PacienteLayout>
+                <PortalFotos />
+              </PacienteLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/portal/pagos"
+          element={
+            <ProtectedRoute requiredRole="paciente">
+              <PacienteLayout>
+                <PortalPagos />
               </PacienteLayout>
             </ProtectedRoute>
           }

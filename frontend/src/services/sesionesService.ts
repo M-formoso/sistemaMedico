@@ -6,6 +6,9 @@ interface ListarParams {
   limit?: number
   paciente_id?: number
   estado?: EstadoSesion
+  fecha?: string
+  fecha_desde?: string
+  fecha_hasta?: string
   fecha_inicio?: string
   fecha_fin?: string
 }

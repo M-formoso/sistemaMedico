@@ -24,6 +24,9 @@ def listar_sesiones(
     limit: int = 100,
     paciente_id: Optional[int] = None,
     estado: Optional[EstadoSesion] = None,
+    fecha: Optional[date] = None,
+    fecha_desde: Optional[date] = None,
+    fecha_hasta: Optional[date] = None,
     fecha_inicio: Optional[date] = None,
     fecha_fin: Optional[date] = None,
     db: Session = Depends(get_db),
@@ -36,6 +39,15 @@ def listar_sesiones(
         query = query.filter(Sesion.paciente_id == paciente_id)
     if estado:
         query = query.filter(Sesion.estado == estado)
+    # Filtro por fecha exacta
+    if fecha:
+        query = query.filter(Sesion.fecha == fecha)
+    # Filtros por rango de fechas (para calendario)
+    if fecha_desde:
+        query = query.filter(Sesion.fecha >= fecha_desde)
+    if fecha_hasta:
+        query = query.filter(Sesion.fecha <= fecha_hasta)
+    # Mantener compatibilidad con fecha_inicio/fecha_fin
     if fecha_inicio:
         query = query.filter(Sesion.fecha >= fecha_inicio)
     if fecha_fin:
