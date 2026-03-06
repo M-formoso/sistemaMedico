@@ -1,37 +1,18 @@
 import axios from 'axios'
 import { useAuthStore } from '@/stores/authStore'
 
-// Obtener URL base
-const getBaseURL = (): string => {
-  // Si hay variable de entorno, usarla
-  let url = import.meta.env.VITE_API_URL as string | undefined
+// URL del backend - SIEMPRE usar HTTPS en producción
+const PRODUCTION_API_URL = 'https://backend-production-240c3.up.railway.app/api/v1'
+const LOCAL_API_URL = 'http://localhost:8000/api/v1'
 
-  // Si no hay URL o estamos en producción, construir dinámicamente
-  if (!url || url.includes('localhost')) {
-    // En producción, usar la URL del backend de Railway
-    if (typeof window !== 'undefined' && !window.location.hostname.includes('localhost')) {
-      // Detectar si es Railway y construir URL del backend
-      if (window.location.hostname.includes('railway.app')) {
-        url = 'https://backend-production-240c3.up.railway.app/api/v1'
-      }
-    }
-  }
+// Detectar si estamos en localhost
+const isLocalhost = typeof window !== 'undefined' &&
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
 
-  // Fallback
-  if (!url) {
-    url = '/api/v1'
-  }
-
-  // Forzar HTTPS si el sitio está en HTTPS
-  if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.startsWith('http://')) {
-    url = url.replace('http://', 'https://')
-  }
-
-  return url
-}
+const baseURL = isLocalhost ? LOCAL_API_URL : PRODUCTION_API_URL
 
 const api = axios.create({
-  baseURL: getBaseURL(),
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
   },
