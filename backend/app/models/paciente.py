@@ -36,8 +36,11 @@ class Paciente(Base):
     medicacion_actual = Column(Text, nullable=True)
     notas_medicas = Column(Text, nullable=True)  # Notas generales
 
-    # Estado
-    estado = Column(Enum(EstadoPaciente), default=EstadoPaciente.NUEVO)
+    # Estado - usar values_callable para enviar el valor del enum, no el nombre
+    estado = Column(
+        Enum(EstadoPaciente, values_callable=lambda x: [e.value for e in x]),
+        default=EstadoPaciente.NUEVO
+    )
     activo = Column(Boolean, default=True)
 
     # Timestamps
