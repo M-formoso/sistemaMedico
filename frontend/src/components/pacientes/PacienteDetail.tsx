@@ -133,8 +133,8 @@ export function PacienteDetail({ pacienteId }: PacienteDetailProps) {
                     <p className="text-gray-600 mt-1">{paciente.medicacion_actual || 'No registrada'}</p>
                   </div>
                   <div>
-                    <h4 className="font-medium text-gray-700">Notas</h4>
-                    <p className="text-gray-600 mt-1">{paciente.notas || 'Sin notas'}</p>
+                    <h4 className="font-medium text-gray-700">Notas Médicas</h4>
+                    <p className="text-gray-600 mt-1">{paciente.notas_medicas || 'Sin notas'}</p>
                   </div>
                 </CardContent>
               </Card>
