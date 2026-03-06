@@ -26,5 +26,16 @@ redis==5.0.1
 # Almacenamiento de archivos
 cloudinary==1.36.0
 
+# Google APIs
+google-auth==2.25.2
+google-auth-oauthlib==1.2.0
+google-api-python-client==2.111.0
+
+# WhatsApp/Twilio
+twilio==8.10.0
+
+# Mercado Pago
+mercadopago==2.2.1
+
 # Utilidades
 python-dotenv==1.0.0

@@ -38,8 +38,10 @@ class Sesion(Base):
     precio_cobrado = Column(Numeric(12, 2), nullable=True)
     descuento_aplicado = Column(Numeric(5, 2), default=0)
 
+    duracion_minutos = Column(Integer, nullable=True, default=30)
     notas = Column(Text, nullable=True)
     notas_internas = Column(Text, nullable=True)
+    google_calendar_event_id = Column(String(255), nullable=True)
 
     created_by = Column(Integer, ForeignKey("usuarios.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

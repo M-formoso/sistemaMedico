@@ -1,7 +1,7 @@
 """Add historia clinica models
 
-Revision ID: 002_historia_clinica
-Revises: 001_initial_migration
+Revision ID: 003
+Revises: 002
 Create Date: 2024-03-06
 
 """
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '002_historia_clinica'
-down_revision = '001_initial_migration'
+revision = '003'
+down_revision = '002'
 branch_labels = None
 depends_on = None
 
@@ -170,6 +170,21 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index('ix_turnos_recurrentes_paciente_id', 'turnos_recurrentes', ['paciente_id'])
+
+    # Agregar columnas a sesiones para integraciones
+    op.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                          WHERE table_name='sesiones' AND column_name='duracion_minutos') THEN
+                ALTER TABLE sesiones ADD COLUMN duracion_minutos INTEGER DEFAULT 30;
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                          WHERE table_name='sesiones' AND column_name='google_calendar_event_id') THEN
+                ALTER TABLE sesiones ADD COLUMN google_calendar_event_id VARCHAR(255);
+            END IF;
+        END $$;
+    """)
 
 
 def downgrade() -> None:

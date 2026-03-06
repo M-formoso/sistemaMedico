@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { historiaClinicaService, Estudio, EstudioCreate, BateriaEstudios } from '@/services/historiaClinicaService'
 import { formatearFecha } from '@/utils/formatters'
-import { toast } from '@/components/ui/toast'
+import { toast } from '@/hooks/useToast'
 
 interface EstudiosTabProps {
   pacienteId: number

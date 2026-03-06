@@ -31,7 +31,7 @@ import {
 import { presupuestosService, Presupuesto, PresupuestoCreate, ItemPresupuesto } from '@/services/presupuestosService'
 import { pacientesService } from '@/services/pacientesService'
 import { formatearFecha, formatearMonto } from '@/utils/formatters'
-import { toast } from '@/components/ui/toast'
+import { toast } from '@/hooks/useToast'
 
 const estadoConfig = {
   borrador: { label: 'Borrador', variant: 'secondary' as const },

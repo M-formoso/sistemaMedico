@@ -7,11 +7,21 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 import json
 
-from google.oauth2.credentials import Credentials
-from google.auth.transport.requests import Request
-from google_auth_oauthlib.flow import Flow
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
+# Importación condicional de las librerías de Google
+try:
+    from google.oauth2.credentials import Credentials
+    from google.auth.transport.requests import Request
+    from google_auth_oauthlib.flow import Flow
+    from googleapiclient.discovery import build
+    from googleapiclient.errors import HttpError
+    GOOGLE_LIBS_AVAILABLE = True
+except ImportError:
+    GOOGLE_LIBS_AVAILABLE = False
+    Credentials = None
+    Request = None
+    Flow = None
+    build = None
+    HttpError = Exception
 
 from app.core.config import settings
 
@@ -27,8 +37,17 @@ class GoogleCalendarService:
         self.service = None
         self.credentials_json = credentials_json
 
+    def _check_google_libs(self):
+        """Verifica que las librerías de Google estén disponibles."""
+        if not GOOGLE_LIBS_AVAILABLE:
+            raise Exception(
+                "Las librerías de Google no están instaladas. "
+                "Ejecuta: pip install google-auth google-auth-oauthlib google-api-python-client"
+            )
+
     def get_auth_url(self, redirect_uri: str) -> str:
         """Genera URL para autorización OAuth2."""
+        self._check_google_libs()
         client_config = {
             "web": {
                 "client_id": settings.GOOGLE_CLIENT_ID,
@@ -55,6 +74,7 @@ class GoogleCalendarService:
 
     def exchange_code(self, code: str, redirect_uri: str) -> Dict[str, Any]:
         """Intercambia código de autorización por tokens."""
+        self._check_google_libs()
         client_config = {
             "web": {
                 "client_id": settings.GOOGLE_CLIENT_ID,
@@ -85,6 +105,7 @@ class GoogleCalendarService:
 
     def _get_service(self, credentials_dict: Dict[str, Any]):
         """Obtiene el servicio de Calendar con las credenciales dadas."""
+        self._check_google_libs()
         credentials = Credentials(
             token=credentials_dict.get("token"),
             refresh_token=credentials_dict.get("refresh_token"),

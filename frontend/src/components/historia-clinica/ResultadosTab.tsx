@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { historiaClinicaService, Resultado, ResultadoCreate } from '@/services/historiaClinicaService'
 import { formatearFecha } from '@/utils/formatters'
-import { toast } from '@/components/ui/toast'
+import { toast } from '@/hooks/useToast'
 
 interface ResultadosTabProps {
   pacienteId: number

@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { historiaClinicaService, Evolucion, EvolucionCreate } from '@/services/historiaClinicaService'
 import { formatearFecha } from '@/utils/formatters'
-import { toast } from '@/components/ui/toast'
+import { toast } from '@/hooks/useToast'
 
 interface EvolucionesTabProps {
   pacienteId: number

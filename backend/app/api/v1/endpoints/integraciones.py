@@ -65,14 +65,17 @@ def google_calendar_callback(
         tokens = google_calendar_service.exchange_code(data.code, data.redirect_uri)
 
         # Guardar tokens en configuración
-        config = db.query(Configuracion).first()
+        import json
+        config = db.query(Configuracion).filter(Configuracion.clave == "google_calendar_credentials").first()
         if not config:
-            config = Configuracion()
+            config = Configuracion(
+                clave="google_calendar_credentials",
+                tipo="json",
+                descripcion="Credenciales de Google Calendar"
+            )
             db.add(config)
 
-        # Guardar como JSON en un campo
-        import json
-        config.google_calendar_credentials = json.dumps(tokens)
+        config.valor = json.dumps(tokens)
         db.commit()
 
         return {"message": "Google Calendar conectado exitosamente"}
@@ -86,11 +89,9 @@ def get_google_calendar_status(
     current_user=Depends(get_current_admin)
 ):
     """Verifica si Google Calendar está conectado."""
-    config = db.query(Configuracion).first()
+    config = db.query(Configuracion).filter(Configuracion.clave == "google_calendar_credentials").first()
 
-    is_connected = False
-    if config and hasattr(config, 'google_calendar_credentials') and config.google_calendar_credentials:
-        is_connected = True
+    is_connected = bool(config and config.valor)
 
     return {
         "connected": is_connected,
@@ -109,12 +110,12 @@ def sync_sesion_to_calendar(
     if not sesion:
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
 
-    config = db.query(Configuracion).first()
-    if not config or not hasattr(config, 'google_calendar_credentials') or not config.google_calendar_credentials:
+    config = db.query(Configuracion).filter(Configuracion.clave == "google_calendar_credentials").first()
+    if not config or not config.valor:
         raise HTTPException(status_code=400, detail="Google Calendar no está conectado")
 
     import json
-    credentials = json.loads(config.google_calendar_credentials)
+    credentials = json.loads(config.valor)
 
     # Construir fecha/hora
     fecha_hora_inicio = datetime.combine(sesion.fecha, sesion.hora_inicio) if sesion.hora_inicio else datetime.combine(sesion.fecha, datetime.min.time())
