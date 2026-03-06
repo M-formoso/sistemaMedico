@@ -1,18 +1,30 @@
 import axios from 'axios'
 import { useAuthStore } from '@/stores/authStore'
 
-// URL del backend - SIEMPRE usar HTTPS en producción
-const PRODUCTION_API_URL = 'https://backend-production-240c3.up.railway.app/api/v1'
-const LOCAL_API_URL = 'http://localhost:8000/api/v1'
+/**
+ * Configuración de API - v2.0
+ * IMPORTANTE: En producción SIEMPRE usar HTTPS
+ */
+const getApiBaseUrl = (): string => {
+  // En el navegador, detectar el entorno
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname
 
-// Detectar si estamos en localhost
-const isLocalhost = typeof window !== 'undefined' &&
-  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    // Desarrollo local
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:8000/api/v1'
+    }
 
-const baseURL = isLocalhost ? LOCAL_API_URL : PRODUCTION_API_URL
+    // Producción - Railway
+    return 'https://backend-production-240c3.up.railway.app/api/v1'
+  }
+
+  // SSR fallback
+  return 'https://backend-production-240c3.up.railway.app/api/v1'
+}
 
 const api = axios.create({
-  baseURL,
+  baseURL: getApiBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
