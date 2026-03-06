@@ -8,7 +8,7 @@ from sqlalchemy import func, and_
 from app.db.session import get_db
 from app.api.deps import get_current_admin
 from app.models.sesion import Sesion, EstadoSesion
-from app.models.pago import Pago, EstadoPago
+from app.models.pago import Pago
 from app.models.material import Material
 from app.models.egreso import Egreso
 
@@ -22,35 +22,33 @@ def obtener_resumen_dia(
 ):
     """Resumen operativo del día."""
     hoy = date.today()
-    inicio_dia = datetime.combine(hoy, datetime.min.time())
-    fin_dia = datetime.combine(hoy, datetime.max.time())
 
     # Sesiones del día
     sesiones_hoy = db.query(Sesion).filter(
-        and_(Sesion.fecha >= inicio_dia, Sesion.fecha <= fin_dia)
+        Sesion.fecha == hoy
     ).all()
 
     total_sesiones = len(sesiones_hoy)
-    sesiones_realizadas = len([s for s in sesiones_hoy if s.estado == EstadoSesion.REALIZADA])
+    sesiones_completadas = len([s for s in sesiones_hoy if s.estado == EstadoSesion.COMPLETADA])
     sesiones_pendientes = len([s for s in sesiones_hoy if s.estado == EstadoSesion.PROGRAMADA])
 
     # Ingresos del día
     pagos_hoy = db.query(func.sum(Pago.monto)).filter(
-        and_(Pago.created_at >= inicio_dia, Pago.created_at <= fin_dia)
+        Pago.fecha == hoy
     ).scalar() or Decimal("0")
 
     return {
         "fecha": hoy.isoformat(),
         "sesiones": {
             "total": total_sesiones,
-            "realizadas": sesiones_realizadas,
+            "completadas": sesiones_completadas,
             "pendientes": sesiones_pendientes,
         },
         "ingresos_dia": float(pagos_hoy),
         "proximas_sesiones": [
             {
                 "id": s.id,
-                "hora": s.fecha.strftime("%H:%M"),
+                "hora": s.hora_inicio.strftime("%H:%M") if s.hora_inicio else "Sin hora",
                 "paciente_id": s.paciente_id,
                 "tratamiento_id": s.tratamiento_id,
             }
@@ -71,28 +69,10 @@ def obtener_alertas(
         Material.stock_actual <= Material.stock_minimo
     ).all()
 
-    # Pagos pendientes
-    pagos_pendientes = db.query(Pago).filter(
-        Pago.estado == EstadoPago.PENDIENTE
-    ).count()
-
-    # Materiales próximos a vencer (30 días)
-    fecha_limite = date.today() + timedelta(days=30)
-    materiales_vencimiento = db.query(Material).filter(
-        Material.activo == True,
-        Material.fecha_vencimiento <= fecha_limite,
-        Material.fecha_vencimiento >= date.today()
-    ).all()
-
     return {
         "stock_bajo": [
             {"id": m.id, "nombre": m.nombre, "stock_actual": float(m.stock_actual), "stock_minimo": float(m.stock_minimo)}
             for m in materiales_bajo
-        ],
-        "pagos_pendientes": pagos_pendientes,
-        "materiales_por_vencer": [
-            {"id": m.id, "nombre": m.nombre, "fecha_vencimiento": m.fecha_vencimiento.isoformat()}
-            for m in materiales_vencimiento
         ],
     }
 
@@ -113,8 +93,8 @@ def obtener_estadisticas_mes(
     # Ingresos del mes
     ingresos = db.query(func.sum(Pago.monto)).filter(
         and_(
-            func.date(Pago.created_at) >= inicio_mes,
-            func.date(Pago.created_at) <= fin_mes
+            Pago.fecha >= inicio_mes,
+            Pago.fecha <= fin_mes
         )
     ).scalar() or Decimal("0")
 
@@ -126,14 +106,10 @@ def obtener_estadisticas_mes(
     # Sesiones del mes
     sesiones_mes = db.query(Sesion).filter(
         and_(
-            func.date(Sesion.fecha) >= inicio_mes,
-            func.date(Sesion.fecha) <= fin_mes
+            Sesion.fecha >= inicio_mes,
+            Sesion.fecha <= fin_mes
         )
     ).count()
-
-    # Valor del inventario
-    materiales = db.query(Material).filter(Material.activo == True).all()
-    valor_inventario = sum(m.valor_stock for m in materiales)
 
     return {
         "periodo": f"{inicio_mes.isoformat()} - {fin_mes.isoformat()}",
@@ -141,5 +117,4 @@ def obtener_estadisticas_mes(
         "egresos": float(egresos),
         "balance": float(ingresos - egresos),
         "sesiones_realizadas": sesiones_mes,
-        "valor_inventario": float(valor_inventario),
     }
