@@ -74,7 +74,7 @@ def obtener_mi_historial(
         "antecedentes": paciente.antecedentes,
         "alergias": paciente.alergias,
         "medicacion_actual": paciente.medicacion_actual,
-        "notas_medicas": paciente.notas,
+        "notas_medicas": paciente.notas_medicas,
         "tratamientos": tratamientos_data,
     }
 

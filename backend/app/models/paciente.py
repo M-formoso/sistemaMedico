@@ -34,7 +34,7 @@ class Paciente(Base):
     antecedentes = Column(Text, nullable=True)
     alergias = Column(Text, nullable=True)
     medicacion_actual = Column(Text, nullable=True)
-    notas = Column(Text, nullable=True)  # Notas generales
+    notas_medicas = Column(Text, nullable=True)  # Notas generales
 
     # Estado
     estado = Column(Enum(EstadoPaciente), default=EstadoPaciente.NUEVO)
