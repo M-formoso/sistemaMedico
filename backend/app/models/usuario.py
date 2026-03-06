@@ -26,7 +26,7 @@ class Usuario(Base):
     email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
     nombre = Column(String(100), nullable=False)
-    rol = Column(Enum(RolUsuario), nullable=False, default=RolUsuario.PACIENTE)
+    rol = Column(Enum(RolUsuario, values_callable=lambda x: [e.value for e in x]), nullable=False, default=RolUsuario.PACIENTE)
 
     # Si es paciente, enlace a su perfil
     paciente_id = Column(Integer, ForeignKey("pacientes.id"), nullable=True)
