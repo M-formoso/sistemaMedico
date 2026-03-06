@@ -1,8 +1,16 @@
 import axios from 'axios'
 import { useAuthStore } from '@/stores/authStore'
 
+// Obtener URL base y forzar HTTPS en producción
+let baseURL = import.meta.env.VITE_API_URL || '/api/v1'
+
+// Forzar HTTPS si estamos en producción (no localhost)
+if (typeof window !== 'undefined' && window.location.protocol === 'https:' && baseURL.startsWith('http://')) {
+  baseURL = baseURL.replace('http://', 'https://')
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
   },
