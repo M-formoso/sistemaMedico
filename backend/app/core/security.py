@@ -11,12 +11,13 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def verificar_password(password_plano: str, password_hash: str) -> bool:
     """Verifica si el password plano coincide con el hash."""
-    return pwd_context.verify(password_plano, password_hash)
+    return pwd_context.verify(password_plano[:72], password_hash)
 
 
 def hashear_password(password: str) -> str:
     """Genera el hash de un password."""
-    return pwd_context.hash(password)
+    # bcrypt tiene límite de 72 bytes
+    return pwd_context.hash(password[:72])
 
 
 def crear_token_acceso(data: dict, expires_delta: Optional[timedelta] = None) -> str:
