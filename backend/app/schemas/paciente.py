@@ -1,7 +1,7 @@
 from datetime import datetime, date
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, computed_field
 
 from app.models.paciente import EstadoPaciente
 
@@ -53,6 +53,11 @@ class PacienteResponse(PacienteBase):
 
     class Config:
         from_attributes = True
+
+    @computed_field
+    @property
+    def nombre_completo(self) -> str:
+        return f"{self.nombre} {self.apellido}"
 
 
 class PacienteList(BaseModel):
