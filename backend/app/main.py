@@ -1,11 +1,28 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 import os
 
 from app.core.config import settings
 from app.api.v1.api import api_router
 
 print("Starting FastAPI app...")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: inicializar base de datos con usuario admin
+    try:
+        from app.db.session import SessionLocal
+        from app.db.init_db import init_db
+        db = SessionLocal()
+        init_db(db)
+        db.close()
+        print("Database initialized successfully")
+    except Exception as e:
+        print(f"Error initializing database: {e}")
+    yield
+    print("Shutting down...")
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -14,6 +31,7 @@ app = FastAPI(
     openapi_url="/api/v1/openapi.json",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
+    lifespan=lifespan,
 )
 
 # CORS - Configuración para Railway
