@@ -65,9 +65,19 @@ export function PacienteForm({ paciente, onSuccess, onCancel }: PacienteFormProp
 
   const mutation = useMutation({
     mutationFn: (data: PacienteFormData) => {
+      // Limpiar campos vacíos para evitar errores 422
       const payload: PacienteCreate = {
-        ...data,
+        nombre: data.nombre,
+        apellido: data.apellido,
+        dni: data.dni || undefined,
+        fecha_nacimiento: data.fecha_nacimiento || undefined,
+        telefono: data.telefono || undefined,
         email: data.email || undefined,
+        antecedentes: data.antecedentes || undefined,
+        alergias: data.alergias || undefined,
+        medicacion_actual: data.medicacion_actual || undefined,
+        notas_medicas: data.notas_medicas || undefined,
+        estado: data.estado,
       }
       return isEditing
         ? pacientesService.actualizar(paciente.id, payload)
