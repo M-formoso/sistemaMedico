@@ -9,7 +9,7 @@ from app.models.paciente import Paciente
 from app.models.sesion import Sesion
 from app.models.tratamiento import Tratamiento
 from app.models.foto import Foto
-from app.models.pago import Pago, EstadoPago
+from app.models.pago import Pago
 
 router = APIRouter()
 
@@ -53,7 +53,7 @@ def obtener_mi_historial(
             tratamientos_dict[s.tratamiento_id]["fecha_inicio"] = s.fecha
 
         # Contar sesiones completadas
-        if s.estado == "completada":
+        if s.estado and (s.estado == "completada" or (hasattr(s.estado, 'value') and s.estado.value == "completada")):
             tratamientos_dict[s.tratamiento_id]["sesiones_realizadas"] += 1
 
     # Determinar estado de cada tratamiento
@@ -101,7 +101,7 @@ def obtener_mis_sesiones(
             "hora_fin": str(s.hora_fin) if s.hora_fin else None,
             "tratamiento_id": s.tratamiento_id,
             "zona_tratada": s.tratamiento.zona_corporal if s.tratamiento else None,
-            "estado": s.estado.value if hasattr(s.estado, 'value') else s.estado,
+            "estado": s.estado.value if hasattr(s.estado, 'value') else str(s.estado),
             "notas": s.notas,
         }
         for s in sesiones
@@ -152,11 +152,11 @@ def obtener_mis_pagos(
     return [
         {
             "id": p.id,
-            "fecha": p.created_at,
+            "fecha": p.fecha or p.created_at,
             "monto": float(p.monto),
-            "moneda": p.moneda,
-            "metodo_pago": p.metodo_pago,
-            "estado": p.estado.value if hasattr(p.estado, 'value') else p.estado,
+            "metodo_pago": p.metodo_pago.value if hasattr(p.metodo_pago, 'value') else str(p.metodo_pago),
+            "concepto": p.concepto,
+            "estado": "pagado",  # Todos los pagos registrados están pagados
             "tratamiento_nombre": p.sesion.tratamiento.nombre if p.sesion and p.sesion.tratamiento else None,
         }
         for p in pagos
@@ -168,15 +168,10 @@ def obtener_mi_saldo(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_paciente)
 ):
-    """Obtener saldo pendiente del paciente."""
-    total_pendiente = db.query(func.sum(Pago.monto)).filter(
-        Pago.paciente_id == current_user.paciente_id,
-        Pago.estado == EstadoPago.PENDIENTE
-    ).scalar() or Decimal("0")
-
+    """Obtener saldo del paciente."""
+    # Total pagado
     total_pagado = db.query(func.sum(Pago.monto)).filter(
-        Pago.paciente_id == current_user.paciente_id,
-        Pago.estado == EstadoPago.PAGADO
+        Pago.paciente_id == current_user.paciente_id
     ).scalar() or Decimal("0")
 
     # Total cobrado en sesiones
@@ -185,8 +180,11 @@ def obtener_mi_saldo(
         Sesion.precio_cobrado != None
     ).scalar() or Decimal("0")
 
+    # Saldo pendiente = total tratamientos - total pagado
+    saldo_pendiente = max(Decimal("0"), total_tratamientos - total_pagado)
+
     return {
-        "saldo_pendiente": float(total_pendiente),
+        "saldo_pendiente": float(saldo_pendiente),
         "total_pagado": float(total_pagado),
         "total_tratamientos": float(total_tratamientos),
     }
