@@ -5,7 +5,7 @@ from decimal import Decimal
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Date, Time, Text, Numeric, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 
-from app.db.base import Base
+from app.db.session import Base
 
 
 class EstadoSesion(str, PyEnum):

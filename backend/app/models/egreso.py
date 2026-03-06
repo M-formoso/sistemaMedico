@@ -3,7 +3,7 @@ from enum import Enum as PyEnum
 
 from sqlalchemy import Column, Integer, String, DateTime, Date, Text, Numeric, ForeignKey, Enum
 
-from app.db.base import Base
+from app.db.session import Base
 
 
 class CategoriaEgreso(str, PyEnum):

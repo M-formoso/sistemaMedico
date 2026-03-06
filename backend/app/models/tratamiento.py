@@ -4,7 +4,7 @@ from decimal import Decimal
 from sqlalchemy import Column, String, Boolean, DateTime, Integer, Text, Numeric
 from sqlalchemy.orm import relationship
 
-from app.db.base import Base
+from app.db.session import Base
 
 
 class Tratamiento(Base):

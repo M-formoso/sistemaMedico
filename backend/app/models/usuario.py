@@ -4,7 +4,7 @@ from enum import Enum as PyEnum
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 
-from app.db.base import Base
+from app.db.session import Base
 
 
 class RolUsuario(str, PyEnum):
