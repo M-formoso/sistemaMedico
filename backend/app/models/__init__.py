@@ -8,6 +8,8 @@ from app.models.movimiento_stock import MovimientoStock, TipoMovimiento
 from app.models.pago import Pago, MetodoPago
 from app.models.egreso import Egreso, CategoriaEgreso, MetodoPagoEgreso
 from app.models.foto import Foto, TipoFoto
+from app.models.profesional import Profesional
+from app.models.configuracion import Configuracion, HorarioAtencion, ListaEspera
 
 __all__ = [
     "Usuario",
@@ -28,4 +30,8 @@ __all__ = [
     "MetodoPagoEgreso",
     "Foto",
     "TipoFoto",
+    "Profesional",
+    "Configuracion",
+    "HorarioAtencion",
+    "ListaEspera",
 ]

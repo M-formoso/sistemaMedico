@@ -27,6 +27,7 @@ class Sesion(Base):
 
     paciente_id = Column(Integer, ForeignKey("pacientes.id"), nullable=False, index=True)
     tratamiento_id = Column(Integer, ForeignKey("tratamientos.id"), nullable=False)
+    profesional_id = Column(Integer, ForeignKey("profesionales.id"), nullable=True, index=True)
 
     fecha = Column(Date, nullable=False, index=True)
     hora_inicio = Column(Time, nullable=True)
@@ -47,6 +48,7 @@ class Sesion(Base):
     # Relaciones
     paciente = relationship("Paciente", back_populates="sesiones")
     tratamiento = relationship("Tratamiento", back_populates="sesiones")
+    profesional = relationship("Profesional", back_populates="sesiones")
     fotos = relationship("Foto", back_populates="sesion")
     materiales = relationship("SesionMaterial", back_populates="sesion", cascade="all, delete-orphan")
     pagos = relationship("Pago", back_populates="sesion")

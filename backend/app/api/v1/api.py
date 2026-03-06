@@ -1,6 +1,20 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, pacientes, tratamientos, sesiones, materiales, fotos, pagos, egresos, dashboard, portal, reportes
+from app.api.v1.endpoints import (
+    auth,
+    pacientes,
+    tratamientos,
+    sesiones,
+    materiales,
+    fotos,
+    pagos,
+    egresos,
+    dashboard,
+    portal,
+    reportes,
+    profesionales,
+    configuracion,
+)
 
 api_router = APIRouter()
 
@@ -9,14 +23,16 @@ api_router.include_router(auth.router, prefix="/auth", tags=["Autenticación"])
 
 # Módulos principales (solo administradora)
 api_router.include_router(pacientes.router, prefix="/pacientes", tags=["Pacientes"])
+api_router.include_router(profesionales.router, prefix="/profesionales", tags=["Profesionales"])
 api_router.include_router(tratamientos.router, prefix="/tratamientos", tags=["Tratamientos"])
-api_router.include_router(sesiones.router, prefix="/sesiones", tags=["Sesiones"])
-api_router.include_router(materiales.router, prefix="/materiales", tags=["Materiales"])
+api_router.include_router(sesiones.router, prefix="/sesiones", tags=["Sesiones/Turnos"])
+api_router.include_router(materiales.router, prefix="/materiales", tags=["Materiales/Inventario"])
 api_router.include_router(fotos.router, prefix="/fotos", tags=["Fotos"])
-api_router.include_router(pagos.router, prefix="/pagos", tags=["Pagos"])
+api_router.include_router(pagos.router, prefix="/pagos", tags=["Pagos/Ingresos"])
 api_router.include_router(egresos.router, prefix="/egresos", tags=["Egresos"])
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"])
 api_router.include_router(reportes.router, prefix="/reportes", tags=["Reportes"])
+api_router.include_router(configuracion.router, prefix="/configuracion", tags=["Configuración"])
 
 # Portal del paciente
 api_router.include_router(portal.router, prefix="/portal", tags=["Portal Paciente"])

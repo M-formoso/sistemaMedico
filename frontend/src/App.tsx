@@ -14,6 +14,8 @@ import SesionesPage from '@/pages/sesiones'
 import MaterialesPage from '@/pages/materiales'
 import FinanzasPage from '@/pages/finanzas'
 import ReportesPage from '@/pages/reportes'
+import ProfesionalesPage from '@/pages/profesionales'
+import ConfiguracionPage from '@/pages/configuracion'
 
 // Portal Paciente
 import PortalHome from '@/pages/portal-paciente'
@@ -124,6 +126,26 @@ function App() {
             <ProtectedRoute requiredRole="administradora">
               <AdminLayout>
                 <ReportesPage />
+              </AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profesionales/*"
+          element={
+            <ProtectedRoute requiredRole="administradora">
+              <AdminLayout>
+                <ProfesionalesPage />
+              </AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/configuracion/*"
+          element={
+            <ProtectedRoute requiredRole="administradora">
+              <AdminLayout>
+                <ConfiguracionPage />
               </AdminLayout>
             </ProtectedRoute>
           }

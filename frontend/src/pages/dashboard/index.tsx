@@ -1,13 +1,37 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { format } from 'date-fns'
+import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Calendar, DollarSign, Package, AlertTriangle, Users, Clock, TrendingUp, ArrowRight } from 'lucide-react'
+import {
+  Calendar,
+  DollarSign,
+  Package,
+  AlertTriangle,
+  Users,
+  Clock,
+  TrendingUp,
+  ArrowRight,
+  UserX,
+  XCircle,
+  CheckCircle,
+  ListOrdered,
+  Filter,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { dashboardService } from '@/services/dashboardService'
 import { sesionesService } from '@/services/sesionesService'
+import { profesionalesService } from '@/services/profesionalesService'
 import { formatearMonto } from '@/utils/formatters'
 import type { EstadoSesion } from '@/types'
 
@@ -33,6 +57,12 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const hoy = format(new Date(), 'yyyy-MM-dd')
 
+  // Filtros para estadísticas avanzadas
+  const [fechaInicio, setFechaInicio] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'))
+  const [fechaFin, setFechaFin] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'))
+  const [profesionalId, setProfesionalId] = useState<string>('')
+  const [showFilters, setShowFilters] = useState(false)
+
   const { data: resumen, isLoading: loadingResumen } = useQuery({
     queryKey: ['dashboard', 'resumen-dia'],
     queryFn: () => dashboardService.obtenerResumenDia(),
@@ -48,9 +78,29 @@ export default function Dashboard() {
     queryFn: () => dashboardService.obtenerEstadisticasMes(),
   })
 
+  const { data: estadisticasAvanzadas } = useQuery({
+    queryKey: ['dashboard', 'estadisticas-avanzadas', fechaInicio, fechaFin, profesionalId],
+    queryFn: () =>
+      dashboardService.obtenerEstadisticasAvanzadas({
+        fecha_inicio: fechaInicio,
+        fecha_fin: fechaFin,
+        profesional_id: profesionalId ? parseInt(profesionalId) : undefined,
+      }),
+  })
+
+  const { data: listaEsperaCount } = useQuery({
+    queryKey: ['dashboard', 'lista-espera-count'],
+    queryFn: () => dashboardService.obtenerListaEsperaCount(),
+  })
+
   const { data: sesionesHoy = [] } = useQuery({
     queryKey: ['sesiones', hoy],
     queryFn: () => sesionesService.listar({ fecha: hoy }),
+  })
+
+  const { data: profesionales = [] } = useQuery({
+    queryKey: ['profesionales', 'activos'],
+    queryFn: () => profesionalesService.listarActivos(),
   })
 
   const isLoading = loadingResumen || loadingAlertas || loadingEstadisticas
@@ -63,7 +113,9 @@ export default function Dashboard() {
     )
   }
 
-  const sesionesActivas = sesionesHoy.filter(s => ['programada', 'confirmada', 'en_curso'].includes(s.estado))
+  const sesionesActivas = sesionesHoy.filter((s) =>
+    ['programada', 'confirmada', 'en_curso'].includes(s.estado)
+  )
   const totalAlerts = (alertas?.stock_bajo?.length || 0) + (alertas?.pagos_pendientes || 0)
 
   return (
@@ -76,15 +128,78 @@ export default function Dashboard() {
             {format(new Date(), "EEEE d 'de' MMMM, yyyy", { locale: es })}
           </p>
         </div>
-        <Button onClick={() => navigate('/sesiones')}>
-          <Calendar className="h-4 w-4 mr-2" />
-          Ver Agenda
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowFilters(!showFilters)}>
+            <Filter className="h-4 w-4 mr-2" />
+            Filtros
+          </Button>
+          <Button onClick={() => navigate('/sesiones')}>
+            <Calendar className="h-4 w-4 mr-2" />
+            Ver Agenda
+          </Button>
+        </div>
       </div>
+
+      {/* Filtros */}
+      {showFilters && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="space-y-1">
+                <label className="text-sm text-gray-500">Desde</label>
+                <Input
+                  type="date"
+                  value={fechaInicio}
+                  onChange={(e) => setFechaInicio(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm text-gray-500">Hasta</label>
+                <Input
+                  type="date"
+                  value={fechaFin}
+                  onChange={(e) => setFechaFin(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm text-gray-500">Profesional</label>
+                <Select value={profesionalId} onValueChange={setProfesionalId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todos</SelectItem>
+                    {profesionales.map((p) => (
+                      <SelectItem key={p.id} value={String(p.id)}>
+                        {p.nombre} {p.apellido}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-end">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setFechaInicio(format(startOfMonth(new Date()), 'yyyy-MM-dd'))
+                    setFechaFin(format(endOfMonth(new Date()), 'yyyy-MM-dd'))
+                    setProfesionalId('')
+                  }}
+                >
+                  Limpiar
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/sesiones')}>
+        <Card
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => navigate('/sesiones')}
+        >
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
@@ -97,19 +212,20 @@ export default function Dashboard() {
                 <Calendar className="h-6 w-6 text-primary-600" />
               </div>
             </div>
-            <div className="mt-2 text-sm text-gray-500">
-              {sesionesActivas.length} pendientes
-            </div>
+            <div className="mt-2 text-sm text-gray-500">{sesionesActivas.length} pendientes</div>
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/pacientes')}>
+        <Card
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => navigate('/pacientes')}
+        >
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500">Pacientes</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {resumen?.pacientes_total || 0}
+                  {estadisticasAvanzadas?.pacientes?.total || 0}
                 </p>
               </div>
               <div className="bg-blue-100 rounded-full p-3">
@@ -117,12 +233,15 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="mt-2 text-sm text-green-600">
-              +{resumen?.pacientes_nuevos || 0} este mes
+              +{estadisticasAvanzadas?.pacientes?.nuevos_periodo || 0} en el período
             </div>
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/finanzas')}>
+        <Card
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => navigate('/finanzas')}
+        >
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
@@ -141,21 +260,120 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className={`cursor-pointer hover:shadow-md transition-shadow ${totalAlerts > 0 ? 'border-yellow-300' : ''}`} onClick={() => navigate('/materiales')}>
+        <Card
+          className={`cursor-pointer hover:shadow-md transition-shadow ${
+            totalAlerts > 0 ? 'border-yellow-300' : ''
+          }`}
+          onClick={() => navigate('/materiales')}
+        >
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500">Alertas</p>
-                <p className={`text-2xl font-bold ${totalAlerts > 0 ? 'text-yellow-600' : 'text-gray-900'}`}>
+                <p
+                  className={`text-2xl font-bold ${
+                    totalAlerts > 0 ? 'text-yellow-600' : 'text-gray-900'
+                  }`}
+                >
                   {totalAlerts}
                 </p>
               </div>
-              <div className={`${totalAlerts > 0 ? 'bg-yellow-100' : 'bg-gray-100'} rounded-full p-3`}>
-                <AlertTriangle className={`h-6 w-6 ${totalAlerts > 0 ? 'text-yellow-600' : 'text-gray-400'}`} />
+              <div
+                className={`${totalAlerts > 0 ? 'bg-yellow-100' : 'bg-gray-100'} rounded-full p-3`}
+              >
+                <AlertTriangle
+                  className={`h-6 w-6 ${totalAlerts > 0 ? 'text-yellow-600' : 'text-gray-400'}`}
+                />
               </div>
             </div>
             <div className="mt-2 text-sm text-gray-500">
               {alertas?.stock_bajo?.length || 0} materiales bajo stock
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Estadísticas Avanzadas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Tasa de Asistencia */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Tasa Asistencia</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {estadisticasAvanzadas?.tasas?.asistencia || 0}%
+                </p>
+              </div>
+              <div className="bg-green-100 rounded-full p-3">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+            </div>
+            <div className="mt-2 text-sm text-gray-500">
+              {estadisticasAvanzadas?.sesiones?.completadas || 0} completadas
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Ausentismo */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Ausentismo</p>
+                <p className="text-2xl font-bold text-orange-600">
+                  {estadisticasAvanzadas?.tasas?.ausentismo || 0}%
+                </p>
+              </div>
+              <div className="bg-orange-100 rounded-full p-3">
+                <UserX className="h-6 w-6 text-orange-600" />
+              </div>
+            </div>
+            <div className="mt-2 text-sm text-gray-500">
+              {estadisticasAvanzadas?.sesiones?.no_asistio || 0} no asistieron
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Cancelaciones */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Cancelaciones</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {estadisticasAvanzadas?.tasas?.cancelacion || 0}%
+                </p>
+              </div>
+              <div className="bg-red-100 rounded-full p-3">
+                <XCircle className="h-6 w-6 text-red-600" />
+              </div>
+            </div>
+            <div className="mt-2 text-sm text-gray-500">
+              {estadisticasAvanzadas?.sesiones?.canceladas || 0} canceladas
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Lista de Espera */}
+        <Card
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => navigate('/configuracion')}
+        >
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Lista de Espera</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {listaEsperaCount?.total || 0}
+                </p>
+              </div>
+              <div className="bg-purple-100 rounded-full p-3">
+                <ListOrdered className="h-6 w-6 text-purple-600" />
+              </div>
+            </div>
+            <div className="mt-2 text-sm text-gray-500">
+              {listaEsperaCount?.por_prioridad?.urgentes || 0} urgentes
             </div>
           </CardContent>
         </Card>
@@ -197,7 +415,8 @@ export default function Dashboard() {
                     <div className="flex items-center gap-3">
                       <div className="text-center bg-white rounded-lg px-2 py-1 border">
                         <p className="text-xs text-gray-500">
-                          {sesion.hora_inicio && format(new Date(`2000-01-01T${sesion.hora_inicio}`), 'HH:mm')}
+                          {sesion.hora_inicio &&
+                            format(new Date(`2000-01-01T${sesion.hora_inicio}`), 'HH:mm')}
                         </p>
                       </div>
                       <div>
@@ -226,6 +445,56 @@ export default function Dashboard() {
 
         {/* Panel Lateral */}
         <div className="space-y-6">
+          {/* Top 5 Tratamientos */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Top Tratamientos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {estadisticasAvanzadas?.top_tratamientos &&
+              estadisticasAvanzadas.top_tratamientos.length > 0 ? (
+                <div className="space-y-3">
+                  {estadisticasAvanzadas.top_tratamientos.map((t, index) => (
+                    <div key={t.id} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-primary-600">#{index + 1}</span>
+                        <span className="text-sm text-gray-700">{t.nombre}</span>
+                      </div>
+                      <Badge variant="outline">{t.cantidad}</Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 text-center py-4">Sin datos en el período</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Turnos Perdidos */}
+          <Card className="border-red-200 bg-red-50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2 text-red-800">
+                <XCircle className="h-4 w-4" />
+                Turnos Perdidos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-2">
+                <p className="text-3xl font-bold text-red-600">
+                  {estadisticasAvanzadas?.turnos_perdidos?.cantidad || 0}
+                </p>
+                <p className="text-sm text-red-700 mt-1">turnos no realizados</p>
+                <p className="text-lg font-semibold text-red-800 mt-2">
+                  {formatearMonto(estadisticasAvanzadas?.turnos_perdidos?.monto_estimado || 0)}
+                </p>
+                <p className="text-xs text-red-600">estimado perdido</p>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Alertas de Stock */}
           {alertas?.stock_bajo && alertas.stock_bajo.length > 0 && (
             <Card className="border-yellow-200 bg-yellow-50">
@@ -237,12 +506,23 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
-                  {alertas.stock_bajo.slice(0, 5).map((m: { id: number; nombre: string; stock_actual: number; stock_minimo: number }) => (
-                    <li key={m.id} className="flex justify-between text-sm">
-                      <span className="text-yellow-800">{m.nombre}</span>
-                      <span className="font-medium text-yellow-900">{m.stock_actual}/{m.stock_minimo}</span>
-                    </li>
-                  ))}
+                  {alertas.stock_bajo
+                    .slice(0, 5)
+                    .map(
+                      (m: {
+                        id: number
+                        nombre: string
+                        stock_actual: number
+                        stock_minimo: number
+                      }) => (
+                        <li key={m.id} className="flex justify-between text-sm">
+                          <span className="text-yellow-800">{m.nombre}</span>
+                          <span className="font-medium text-yellow-900">
+                            {m.stock_actual}/{m.stock_minimo}
+                          </span>
+                        </li>
+                      )
+                    )}
                 </ul>
                 <Button
                   variant="outline"
@@ -280,7 +560,11 @@ export default function Dashboard() {
                 </div>
                 <div className="border-t pt-3 flex justify-between items-center">
                   <span className="font-medium">Balance</span>
-                  <span className={`text-lg font-bold ${(estadisticas?.balance || 0) >= 0 ? 'text-primary-600' : 'text-red-600'}`}>
+                  <span
+                    className={`text-lg font-bold ${
+                      (estadisticas?.balance || 0) >= 0 ? 'text-primary-600' : 'text-red-600'
+                    }`}
+                  >
                     {formatearMonto(estadisticas?.balance || 0)}
                   </span>
                 </div>

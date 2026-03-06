@@ -11,18 +11,22 @@ import {
   LogOut,
   Menu,
   X,
+  UserCog,
+  Settings,
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { cn } from '@/lib/utils'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Agenda/Turnos', href: '/sesiones', icon: Calendar },
   { name: 'Pacientes', href: '/pacientes', icon: Users },
+  { name: 'Profesionales', href: '/profesionales', icon: UserCog },
   { name: 'Tratamientos', href: '/tratamientos', icon: Scissors },
-  { name: 'Sesiones', href: '/sesiones', icon: Calendar },
   { name: 'Materiales', href: '/materiales', icon: Package },
   { name: 'Finanzas', href: '/finanzas', icon: DollarSign },
   { name: 'Reportes', href: '/reportes', icon: BarChart3 },
+  { name: 'Configuración', href: '/configuracion', icon: Settings },
 ]
 
 interface AdminLayoutProps {

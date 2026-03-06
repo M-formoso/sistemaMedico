@@ -13,3 +13,5 @@ from app.models.material import Material
 from app.models.movimiento_stock import MovimientoStock
 from app.models.pago import Pago
 from app.models.egreso import Egreso
+from app.models.profesional import Profesional
+from app.models.configuracion import Configuracion, HorarioAtencion, ListaEspera
