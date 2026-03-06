@@ -28,7 +28,10 @@ class Foto(Base):
     url = Column(String(500), nullable=False)  # URL de Cloudinary
     public_id = Column(String(255), nullable=True)  # ID de Cloudinary para eliminación
 
-    tipo = Column(Enum(TipoFoto), default=TipoFoto.EVOLUCION)
+    tipo = Column(
+        Enum(TipoFoto, values_callable=lambda x: [e.value for e in x]),
+        default=TipoFoto.EVOLUCION
+    )
     zona = Column(String(100), nullable=True)
     fecha = Column(Date, nullable=True)
 
