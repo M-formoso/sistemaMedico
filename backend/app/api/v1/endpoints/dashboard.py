@@ -116,7 +116,7 @@ def obtener_estadisticas_mes(
 
     # Valor del inventario
     valor_inventario = db.query(
-        func.sum(Material.stock_actual * Material.precio_unitario)
+        func.sum(Material.stock_actual * Material.precio_costo)
     ).filter(Material.activo == True).scalar() or Decimal("0")
 
     return {
@@ -198,8 +198,8 @@ def obtener_estadisticas_avanzadas(
     for s in sesiones_perdidas:
         if s.tratamiento_id:
             tratamiento = db.query(Tratamiento).filter(Tratamiento.id == s.tratamiento_id).first()
-            if tratamiento and tratamiento.precio:
-                monto_perdido += tratamiento.precio
+            if tratamiento and tratamiento.precio_lista:
+                monto_perdido += tratamiento.precio_lista
 
     # Pacientes nuevos en el período
     pacientes_nuevos = db.query(Paciente).filter(
