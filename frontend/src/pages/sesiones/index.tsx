@@ -140,8 +140,8 @@ export default function SesionesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Agenda / Sesiones</h1>
-          <p className="text-gray-500">Gestiona las sesiones de tratamiento</p>
+          <h1 className="text-2xl font-bold text-gray-900">Agenda / Turnos</h1>
+          <p className="text-gray-500">Gestiona los turnos de tratamiento</p>
         </div>
         <div className="flex items-center gap-2">
           {/* Toggle Vista */}
@@ -173,7 +173,7 @@ export default function SesionesPage() {
           </div>
           <Button onClick={() => setIsCreating(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            Nueva Sesión
+            Nuevo Turno
           </Button>
         </div>
       </div>
@@ -228,7 +228,7 @@ export default function SesionesPage() {
 
                 {/* Resumen */}
                 <div className="flex items-center justify-end gap-2 text-sm text-gray-500">
-                  <span>{filteredSesiones.length} sesiones</span>
+                  <span>{filteredSesiones.length} turnos</span>
                 </div>
               </div>
             </CardContent>
@@ -243,13 +243,13 @@ export default function SesionesPage() {
             <Card>
               <CardContent className="py-12 text-center">
                 <Calendar className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900">No hay sesiones</h3>
+                <h3 className="text-lg font-medium text-gray-900">No hay turnos</h3>
                 <p className="text-gray-500 mt-1">
-                  No se encontraron sesiones para la fecha seleccionada.
+                  No se encontraron turnos para la fecha seleccionada.
                 </p>
                 <Button className="mt-4" onClick={() => setIsCreating(true)}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Programar Sesión
+                  Programar Turno
                 </Button>
               </CardContent>
             </Card>
@@ -465,11 +465,11 @@ export default function SesionesPage() {
         </Card>
       )}
 
-      {/* Dialog: Crear Sesión */}
+      {/* Dialog: Crear Turno */}
       <Dialog open={isCreating} onOpenChange={setIsCreating}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Nueva Sesión</DialogTitle>
+            <DialogTitle>Nuevo Turno</DialogTitle>
           </DialogHeader>
           <SesionForm
             onSuccess={() => setIsCreating(false)}
@@ -478,11 +478,11 @@ export default function SesionesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: Ver Sesión */}
+      {/* Dialog: Ver Turno */}
       <Dialog open={isViewing} onOpenChange={setIsViewing}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Detalle de Sesión</DialogTitle>
+            <DialogTitle>Detalle de Turno</DialogTitle>
           </DialogHeader>
           {selectedSesion && (
             <SesionDetail
@@ -497,11 +497,11 @@ export default function SesionesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: Editar Sesión */}
+      {/* Dialog: Editar Turno */}
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Editar Sesión</DialogTitle>
+            <DialogTitle>Editar Turno</DialogTitle>
           </DialogHeader>
           {selectedSesion && (
             <SesionForm

@@ -37,6 +37,21 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: Optional[str] = None
     EMAIL_FROM: Optional[str] = None
 
+    # Google Calendar
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_SECRET: Optional[str] = None
+
+    # WhatsApp (Twilio o Meta)
+    WHATSAPP_PROVIDER: str = "mock"  # 'twilio', 'meta', o 'mock'
+    TWILIO_ACCOUNT_SID: Optional[str] = None
+    TWILIO_AUTH_TOKEN: Optional[str] = None
+    WHATSAPP_FROM_NUMBER: Optional[str] = None
+    WHATSAPP_API_URL: Optional[str] = None
+
+    # Mercado Pago
+    MERCADOPAGO_ACCESS_TOKEN: Optional[str] = None
+    MERCADOPAGO_PUBLIC_KEY: Optional[str] = None
+
     # CORS - URLs permitidas
     FRONTEND_URL: str = "http://localhost:5173"
     BACKEND_CORS_ORIGINS: List[str] = []

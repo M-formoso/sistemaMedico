@@ -1,9 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { User, Calendar, Phone, Mail, FileText, Clock } from 'lucide-react'
+import { User, Calendar, Phone, Mail, FileText, Clock, CreditCard, FolderOpen } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { pacientesService } from '@/services/pacientesService'
 import { formatearFecha, formatearMonto } from '@/utils/formatters'
+import { HistoriaClinicaTabs } from '@/components/historia-clinica/HistoriaClinicaTabs'
 import type { Paciente } from '@/types'
 
 interface PacienteDetailProps {
@@ -65,6 +67,9 @@ export function PacienteDetail({ pacienteId }: PacienteDetailProps) {
                   <span className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
                     {formatearFecha(paciente.fecha_nacimiento)}
+                    {paciente.edad !== undefined && paciente.edad !== null && (
+                      <span className="ml-1">({paciente.edad} años)</span>
+                    )}
                   </span>
                 )}
                 {paciente.telefono && (
@@ -85,123 +90,122 @@ export function PacienteDetail({ pacienteId }: PacienteDetailProps) {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Historial Clínico */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Historial Clínico
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {paciente.antecedentes && (
-              <div>
-                <h4 className="font-medium text-gray-700">Antecedentes</h4>
-                <p className="text-gray-600 mt-1">{paciente.antecedentes}</p>
-              </div>
-            )}
-            {paciente.alergias && (
-              <div>
-                <h4 className="font-medium text-gray-700">Alergias</h4>
-                <p className="text-gray-600 mt-1">{paciente.alergias}</p>
-              </div>
-            )}
-            {paciente.medicacion_actual && (
-              <div>
-                <h4 className="font-medium text-gray-700">Medicación Actual</h4>
-                <p className="text-gray-600 mt-1">{paciente.medicacion_actual}</p>
-              </div>
-            )}
-            {paciente.notas_medicas && (
-              <div>
-                <h4 className="font-medium text-gray-700">Notas Médicas</h4>
-                <p className="text-gray-600 mt-1">{paciente.notas_medicas}</p>
-              </div>
-            )}
-            {!paciente.antecedentes && !paciente.alergias && !paciente.medicacion_actual && !paciente.notas_medicas && (
-              <p className="text-gray-500">Sin información clínica registrada</p>
-            )}
-          </CardContent>
-        </Card>
+      {/* Tabs principales */}
+      <Tabs defaultValue="historia" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="historia" className="flex items-center gap-2">
+            <FolderOpen className="h-4 w-4" />
+            Historia Clínica
+          </TabsTrigger>
+          <TabsTrigger value="turnos" className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            Turnos
+          </TabsTrigger>
+          <TabsTrigger value="finanzas" className="flex items-center gap-2">
+            <CreditCard className="h-4 w-4" />
+            Finanzas
+          </TabsTrigger>
+        </TabsList>
 
-        {/* Últimas Sesiones */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Últimas Sesiones
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {historial?.sesiones?.length > 0 ? (
-              <div className="space-y-3">
-                {historial.sesiones.slice(0, 5).map((sesion: { id: string; fecha: string; zona_tratada: string; estado: string }) => (
-                  <div key={sesion.id} className="flex justify-between items-center py-2 border-b last:border-0">
-                    <div>
-                      <p className="font-medium">{formatearFecha(sesion.fecha)}</p>
-                      <p className="text-sm text-gray-500">{sesion.zona_tratada || 'Sin zona'}</p>
-                    </div>
-                    <Badge variant={sesion.estado === 'realizada' ? 'success' : 'info'}>
-                      {sesion.estado}
-                    </Badge>
+        <div className="mt-6">
+          {/* Tab Historia Clínica */}
+          <TabsContent value="historia">
+            <div className="space-y-6">
+              {/* Resumen Clínico */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Resumen Clínico
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium text-gray-700">Antecedentes</h4>
+                    <p className="text-gray-600 mt-1">{paciente.antecedentes || 'No registrados'}</p>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500">Sin sesiones registradas</p>
-            )}
-          </CardContent>
-        </Card>
+                  <div>
+                    <h4 className="font-medium text-gray-700">Alergias</h4>
+                    <p className="text-gray-600 mt-1">{paciente.alergias || 'No registradas'}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-700">Medicación Actual</h4>
+                    <p className="text-gray-600 mt-1">{paciente.medicacion_actual || 'No registrada'}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-700">Notas</h4>
+                    <p className="text-gray-600 mt-1">{paciente.notas || 'Sin notas'}</p>
+                  </div>
+                </CardContent>
+              </Card>
 
-        {/* Pagos */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Historial de Pagos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {historial?.pagos?.length > 0 ? (
-              <div className="space-y-3">
-                {historial.pagos.slice(0, 5).map((pago: { id: string; monto: number; created_at: string; estado: string; metodo_pago: string }) => (
-                  <div key={pago.id} className="flex justify-between items-center py-2 border-b last:border-0">
-                    <div>
-                      <p className="font-medium">{formatearMonto(pago.monto)}</p>
-                      <p className="text-sm text-gray-500">
-                        {formatearFecha(pago.created_at)} - {pago.metodo_pago}
-                      </p>
-                    </div>
-                    <Badge variant={pago.estado === 'pagado' ? 'success' : 'warning'}>
-                      {pago.estado}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500">Sin pagos registrados</p>
-            )}
-          </CardContent>
-        </Card>
+              {/* Sub-tabs de Historia Clínica */}
+              <HistoriaClinicaTabs pacienteId={parseInt(pacienteId)} />
+            </div>
+          </TabsContent>
 
-        {/* Fotos */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Galería de Fotos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {historial?.fotos?.length > 0 ? (
-              <div className="grid grid-cols-3 gap-2">
-                {historial.fotos.slice(0, 6).map((foto: { id: string; url: string; tipo: string }) => (
-                  <div key={foto.id} className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-                    <img src={foto.url} alt={foto.tipo} className="w-full h-full object-cover" />
+          {/* Tab Turnos */}
+          <TabsContent value="turnos">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Últimos Turnos
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {historial?.sesiones?.length > 0 ? (
+                  <div className="space-y-3">
+                    {historial.sesiones.map((sesion: { id: string; fecha: string; fecha_hora?: string; zona_tratada: string; estado: string; tratamiento_nombre?: string }) => (
+                      <div key={sesion.id} className="flex justify-between items-center py-3 border-b last:border-0">
+                        <div>
+                          <p className="font-medium">{formatearFecha(sesion.fecha_hora || sesion.fecha)}</p>
+                          <p className="text-sm text-gray-500">
+                            {sesion.tratamiento_nombre || sesion.zona_tratada || 'Sin especificar'}
+                          </p>
+                        </div>
+                        <Badge variant={sesion.estado === 'realizada' ? 'success' : sesion.estado === 'cancelada' ? 'destructive' : 'info'}>
+                          {sesion.estado}
+                        </Badge>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500">Sin fotos registradas</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                ) : (
+                  <p className="text-gray-500">Sin turnos registrados</p>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Tab Finanzas */}
+          <TabsContent value="finanzas">
+            <Card>
+              <CardHeader>
+                <CardTitle>Historial de Pagos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {historial?.pagos?.length > 0 ? (
+                  <div className="space-y-3">
+                    {historial.pagos.map((pago: { id: string; monto: number; created_at: string; metodo_pago: string }) => (
+                      <div key={pago.id} className="flex justify-between items-center py-3 border-b last:border-0">
+                        <div>
+                          <p className="font-medium text-green-600">{formatearMonto(pago.monto)}</p>
+                          <p className="text-sm text-gray-500">
+                            {formatearFecha(pago.created_at)} - {pago.metodo_pago}
+                          </p>
+                        </div>
+                        <Badge variant="success">Pagado</Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500">Sin pagos registrados</p>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </div>
+      </Tabs>
     </div>
   )
 }

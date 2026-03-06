@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Bell,
   Search,
+  FileText,
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { cn } from '@/lib/utils'
@@ -28,6 +29,7 @@ const navigation = [
   { name: 'Pacientes', href: '/pacientes', icon: Users },
   { name: 'Profesionales', href: '/profesionales', icon: UserCog },
   { name: 'Tratamientos', href: '/tratamientos', icon: Scissors },
+  { name: 'Presupuestos', href: '/presupuestos', icon: FileText },
   { name: 'Materiales', href: '/materiales', icon: Package },
   { name: 'Finanzas', href: '/finanzas', icon: DollarSign },
   { name: 'Reportes', href: '/reportes', icon: BarChart3 },

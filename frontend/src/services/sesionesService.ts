@@ -15,7 +15,7 @@ interface ListarParams {
 
 export const sesionesService = {
   listar: async (params: ListarParams = {}): Promise<Sesion[]> => {
-    const { data } = await api.get('/sesiones', { params })
+    const { data } = await api.get('/sesiones/', { params })
     return data
   },
 
@@ -25,7 +25,7 @@ export const sesionesService = {
   },
 
   crear: async (payload: SesionCreate): Promise<Sesion> => {
-    const { data } = await api.post('/sesiones', payload)
+    const { data } = await api.post('/sesiones/', payload)
     return data
   },
 

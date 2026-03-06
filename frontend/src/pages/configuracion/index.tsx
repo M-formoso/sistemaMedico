@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Settings, Clock, Users, Plus, Trash2, Edit } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
+import { Settings, Clock, Users, Plus, Trash2, Edit, ExternalLink, Link2, Calendar, MessageSquare, CreditCard, CheckCircle, Loader2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -31,6 +32,7 @@ import {
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/useToast'
 import { configuracionService, HorarioAtencion, ListaEspera } from '@/services/configuracionService'
+import { integracionesService } from '@/services/integracionesService'
 
 const DIAS_SEMANA = [
   'Lunes',
@@ -49,9 +51,50 @@ export default function ConfiguracionPage() {
     hora_inicio: '09:00',
     hora_fin: '18:00',
   })
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [isConnectingGoogle, setIsConnectingGoogle] = useState(false)
 
   const queryClient = useQueryClient()
   const { toast } = useToast()
+
+  // Verificar estado de Google Calendar
+  const { data: googleStatus, refetch: refetchGoogleStatus } = useQuery({
+    queryKey: ['google-calendar-status'],
+    queryFn: integracionesService.getGoogleCalendarStatus,
+  })
+
+  // Procesar callback de Google OAuth
+  useEffect(() => {
+    const code = searchParams.get('code')
+    if (code) {
+      const redirectUri = window.location.origin + '/configuracion'
+      integracionesService.googleCalendarCallback(code, redirectUri)
+        .then(() => {
+          toast({ title: 'Google Calendar conectado exitosamente' })
+          refetchGoogleStatus()
+          // Limpiar URL
+          setSearchParams({})
+        })
+        .catch((error) => {
+          toast({ title: 'Error al conectar Google Calendar', variant: 'destructive' })
+          console.error(error)
+          setSearchParams({})
+        })
+    }
+  }, [searchParams])
+
+  // Conectar Google Calendar
+  const handleConnectGoogle = async () => {
+    setIsConnectingGoogle(true)
+    try {
+      const redirectUri = window.location.origin + '/configuracion'
+      const { auth_url } = await integracionesService.getGoogleAuthUrl(redirectUri)
+      window.location.href = auth_url
+    } catch (error) {
+      toast({ title: 'Error al obtener URL de autorización', variant: 'destructive' })
+      setIsConnectingGoogle(false)
+    }
+  }
 
   const { data: horarios = [] } = useQuery({
     queryKey: ['horarios'],
@@ -114,6 +157,10 @@ export default function ConfiguracionPage() {
           <TabsTrigger value="general">
             <Settings className="mr-2 h-4 w-4" />
             General
+          </TabsTrigger>
+          <TabsTrigger value="integraciones">
+            <Link2 className="mr-2 h-4 w-4" />
+            Integraciones
           </TabsTrigger>
         </TabsList>
 
@@ -290,6 +337,154 @@ export default function ConfiguracionPage() {
                     </div>
                   ))
                 )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="integraciones" className="space-y-4">
+          {/* RCTA - Receta Digital */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ExternalLink className="h-5 w-5 text-primary-600" />
+                RCTA - Recetas Digitales
+              </CardTitle>
+              <CardDescription>
+                Sistema de Recetas Controladas y Trazabilidad de Argentina
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600">
+                RCTA es el sistema oficial para la emisión de recetas digitales de medicamentos controlados en Argentina.
+                Para crear recetas digitales, accede al portal oficial.
+              </p>
+              <Button
+                onClick={() => window.open('https://rcta.msal.gob.ar/', '_blank')}
+                className="flex items-center gap-2"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Acceder a RCTA
+              </Button>
+              <div className="text-xs text-gray-500 mt-2">
+                * Requiere matrícula habilitada y credenciales del Ministerio de Salud
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Google Calendar */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-blue-600" />
+                Google Calendar
+              </CardTitle>
+              <CardDescription>
+                Sincroniza los turnos con Google Calendar
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Conecta tu cuenta de Google para sincronizar automáticamente los turnos con tu calendario.
+                Los pacientes recibirán recordatorios automáticos.
+              </p>
+              <div className="flex items-center gap-4">
+                {googleStatus?.connected ? (
+                  <>
+                    <Badge variant="default" className="bg-green-600">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Conectado
+                    </Badge>
+                    <span className="text-sm text-green-600">Google Calendar está vinculado</span>
+                  </>
+                ) : googleStatus?.configured ? (
+                  <>
+                    <Badge variant="secondary">No conectado</Badge>
+                    <Button
+                      variant="outline"
+                      onClick={handleConnectGoogle}
+                      disabled={isConnectingGoogle}
+                    >
+                      {isConnectingGoogle ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Conectando...
+                        </>
+                      ) : (
+                        <>
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Conectar Google Calendar
+                        </>
+                      )}
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Badge variant="secondary">No configurado</Badge>
+                    <span className="text-sm text-gray-500">
+                      Configura las credenciales OAuth2 en el servidor
+                    </span>
+                  </>
+                )}
+              </div>
+              {!googleStatus?.configured && (
+                <div className="text-xs text-gray-500">
+                  * Requiere configurar GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET en las variables de entorno
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* WhatsApp */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-green-600" />
+                Recordatorios WhatsApp
+              </CardTitle>
+              <CardDescription>
+                Envía recordatorios de turnos por WhatsApp
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Envía recordatorios automáticos 24 horas antes de cada turno.
+                Los pacientes pueden confirmar o reprogramar directamente.
+              </p>
+              <div className="flex items-center gap-4">
+                <Badge variant="secondary">Modo de prueba</Badge>
+                <span className="text-sm text-gray-500">Los mensajes se registran pero no se envían</span>
+              </div>
+              <div className="text-xs text-gray-500">
+                * Requiere integración con Twilio o Meta WhatsApp Business API
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Mercado Pago */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-blue-500" />
+                Mercado Pago
+              </CardTitle>
+              <CardDescription>
+                Acepta pagos online con Mercado Pago
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Permite que los pacientes paguen online con tarjeta, débito o dinero en cuenta de Mercado Pago.
+                Los pagos se registran automáticamente en el sistema.
+              </p>
+              <div className="flex items-center gap-4">
+                <Badge variant="secondary">No configurado</Badge>
+                <Button variant="outline" disabled>
+                  Configurar Mercado Pago
+                </Button>
+              </div>
+              <div className="text-xs text-gray-500">
+                * Requiere credenciales de Mercado Pago Developers
               </div>
             </CardContent>
           </Card>

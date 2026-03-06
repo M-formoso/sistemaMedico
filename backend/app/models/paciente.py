@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from enum import Enum as PyEnum
 
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Date, Text, Enum
@@ -34,7 +34,7 @@ class Paciente(Base):
     antecedentes = Column(Text, nullable=True)
     alergias = Column(Text, nullable=True)
     medicacion_actual = Column(Text, nullable=True)
-    notas_medicas = Column(Text, nullable=True)
+    notas = Column(Text, nullable=True)  # Notas generales
 
     # Estado
     estado = Column(Enum(EstadoPaciente), default=EstadoPaciente.NUEVO)
@@ -49,6 +49,12 @@ class Paciente(Base):
     sesiones = relationship("Sesion", back_populates="paciente")
     fotos = relationship("Foto", back_populates="paciente")
     pagos = relationship("Pago", back_populates="paciente")
+    evoluciones = relationship("Evolucion", back_populates="paciente", order_by="desc(Evolucion.fecha)")
+    estudios = relationship("Estudio", back_populates="paciente", order_by="desc(Estudio.fecha_solicitud)")
+    resultados = relationship("Resultado", back_populates="paciente", order_by="desc(Resultado.fecha)")
+    consentimientos = relationship("Consentimiento", back_populates="paciente")
+    presupuestos = relationship("Presupuesto", back_populates="paciente", order_by="desc(Presupuesto.fecha)")
+    turnos_recurrentes = relationship("TurnoRecurrente", back_populates="paciente")
 
     def __repr__(self):
         return f"<Paciente {self.nombre} {self.apellido}>"
@@ -56,3 +62,15 @@ class Paciente(Base):
     @property
     def nombre_completo(self) -> str:
         return f"{self.nombre} {self.apellido}"
+
+    @property
+    def edad(self) -> int | None:
+        """Calcula la edad actual del paciente."""
+        if not self.fecha_nacimiento:
+            return None
+        hoy = date.today()
+        edad = hoy.year - self.fecha_nacimiento.year
+        # Ajustar si aún no cumplió años este año
+        if (hoy.month, hoy.day) < (self.fecha_nacimiento.month, self.fecha_nacimiento.day):
+            edad -= 1
+        return edad

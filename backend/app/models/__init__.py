@@ -10,6 +10,12 @@ from app.models.egreso import Egreso, CategoriaEgreso, MetodoPagoEgreso
 from app.models.foto import Foto, TipoFoto
 from app.models.profesional import Profesional
 from app.models.configuracion import Configuracion, HorarioAtencion, ListaEspera
+from app.models.evolucion import Evolucion
+from app.models.estudio import Estudio, BateriaEstudios, EstadoEstudio
+from app.models.resultado import Resultado
+from app.models.consentimiento import Consentimiento, TipoConsentimiento
+from app.models.presupuesto import Presupuesto, EstadoPresupuesto
+from app.models.turno_recurrente import TurnoRecurrente, FrecuenciaTurno, DiaSemana
 
 __all__ = [
     "Usuario",
@@ -34,4 +40,16 @@ __all__ = [
     "Configuracion",
     "HorarioAtencion",
     "ListaEspera",
+    "Evolucion",
+    "Estudio",
+    "BateriaEstudios",
+    "EstadoEstudio",
+    "Resultado",
+    "Consentimiento",
+    "TipoConsentimiento",
+    "Presupuesto",
+    "EstadoPresupuesto",
+    "TurnoRecurrente",
+    "FrecuenciaTurno",
+    "DiaSemana",
 ]

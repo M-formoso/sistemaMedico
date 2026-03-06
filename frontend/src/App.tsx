@@ -16,6 +16,7 @@ import FinanzasPage from '@/pages/finanzas'
 import ReportesPage from '@/pages/reportes'
 import ProfesionalesPage from '@/pages/profesionales'
 import ConfiguracionPage from '@/pages/configuracion'
+import PresupuestosPage from '@/pages/presupuestos'
 
 // Portal Paciente
 import PortalHome from '@/pages/portal-paciente'
@@ -150,6 +151,16 @@ function App() {
             <ProtectedRoute requiredRole="administradora">
               <AdminLayout>
                 <ConfiguracionPage />
+              </AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/presupuestos/*"
+          element={
+            <ProtectedRoute requiredRole="administradora">
+              <AdminLayout>
+                <PresupuestosPage />
               </AdminLayout>
             </ProtectedRoute>
           }

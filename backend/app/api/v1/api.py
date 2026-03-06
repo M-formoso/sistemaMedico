@@ -14,6 +14,13 @@ from app.api.v1.endpoints import (
     reportes,
     profesionales,
     configuracion,
+    evoluciones,
+    estudios,
+    resultados,
+    consentimientos,
+    presupuestos,
+    turnos_recurrentes,
+    integraciones,
 )
 
 api_router = APIRouter()
@@ -36,3 +43,18 @@ api_router.include_router(configuracion.router, prefix="/configuracion", tags=["
 
 # Portal del paciente
 api_router.include_router(portal.router, prefix="/portal", tags=["Portal Paciente"])
+
+# Historia Clínica
+api_router.include_router(evoluciones.router, prefix="/evoluciones", tags=["Historia Clínica - Evoluciones"])
+api_router.include_router(estudios.router, prefix="/estudios", tags=["Historia Clínica - Estudios"])
+api_router.include_router(resultados.router, prefix="/resultados", tags=["Historia Clínica - Resultados"])
+api_router.include_router(consentimientos.router, prefix="/consentimientos", tags=["Historia Clínica - Consentimientos"])
+
+# Presupuestos
+api_router.include_router(presupuestos.router, prefix="/presupuestos", tags=["Presupuestos"])
+
+# Turnos Recurrentes
+api_router.include_router(turnos_recurrentes.router, prefix="/turnos-recurrentes", tags=["Turnos Recurrentes"])
+
+# Integraciones (Google Calendar, WhatsApp, Mercado Pago)
+api_router.include_router(integraciones.router, prefix="/integraciones", tags=["Integraciones"])
