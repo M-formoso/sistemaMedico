@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import Optional
-from uuid import UUID
 
 from pydantic import BaseModel, EmailStr
 
@@ -14,9 +13,21 @@ class Token(BaseModel):
     token_type: str = "bearer"
 
 
+class TokenPayload(BaseModel):
+    """Payload del token JWT."""
+    sub: Optional[str] = None
+    exp: Optional[int] = None
+
+
 class TokenRefresh(BaseModel):
     """Request para renovar token."""
     refresh_token: str
+
+
+class LoginRequest(BaseModel):
+    """Request de login."""
+    email: EmailStr
+    password: str
 
 
 class UsuarioBase(BaseModel):
@@ -29,13 +40,13 @@ class UsuarioBase(BaseModel):
 class UsuarioCreate(UsuarioBase):
     """Datos para crear usuario."""
     password: str
-    paciente_id: Optional[UUID] = None
+    paciente_id: Optional[int] = None
 
 
 class UsuarioResponse(UsuarioBase):
     """Respuesta con datos de usuario."""
-    id: UUID
-    paciente_id: Optional[UUID] = None
+    id: int
+    paciente_id: Optional[int] = None
     activo: bool
     ultimo_acceso: Optional[datetime] = None
     created_at: datetime
