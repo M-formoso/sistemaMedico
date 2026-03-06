@@ -9,6 +9,7 @@ import PacienteLayout from '@/components/layout/PacienteLayout'
 import Login from '@/pages/auth/Login'
 import Dashboard from '@/pages/dashboard'
 import PacientesPage from '@/pages/pacientes'
+import PacienteDetailPage from '@/pages/pacientes/[id]'
 import TratamientosPage from '@/pages/tratamientos'
 import SesionesPage from '@/pages/sesiones'
 import MaterialesPage from '@/pages/materiales'
@@ -76,11 +77,21 @@ function App() {
           }
         />
         <Route
-          path="/pacientes/*"
+          path="/pacientes"
           element={
             <ProtectedRoute requiredRole="administradora">
               <AdminLayout>
                 <PacientesPage />
+              </AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/pacientes/:id"
+          element={
+            <ProtectedRoute requiredRole="administradora">
+              <AdminLayout>
+                <PacienteDetailPage />
               </AdminLayout>
             </ProtectedRoute>
           }
