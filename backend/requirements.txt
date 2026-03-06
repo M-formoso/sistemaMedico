@@ -33,6 +33,7 @@ google-api-python-client==2.111.0
 
 # WhatsApp/Twilio
 twilio==8.10.0
+httpx==0.26.0
 
 # Mercado Pago
 mercadopago==2.2.1
