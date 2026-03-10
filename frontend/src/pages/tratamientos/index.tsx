@@ -27,14 +27,14 @@ export default function TratamientosPage() {
 
   const { data: tratamientos, isLoading } = useQuery({
     queryKey: ['tratamientos'],
-    queryFn: () => tratamientosService.obtenerTodos(),
+    queryFn: () => tratamientosService.listar(),
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => tratamientosService.eliminar(id),
+    mutationFn: (id: number) => tratamientosService.eliminar(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tratamientos'] })
-      toast({ title: 'Tratamiento eliminado', variant: 'success' })
+      toast({ title: 'Tratamiento eliminado' })
       setDeletingTratamiento(null)
     },
   })
