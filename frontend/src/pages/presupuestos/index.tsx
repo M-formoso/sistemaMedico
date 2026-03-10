@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -213,12 +213,12 @@ export default function PresupuestosPage() {
                 />
               </div>
             </div>
-            <Select value={filtroEstado} onValueChange={setFiltroEstado}>
+            <Select value={filtroEstado || "todos"} onValueChange={(v) => setFiltroEstado(v === "todos" ? "" : v)}>
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Todos los estados" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="todos">Todos</SelectItem>
                 <SelectItem value="borrador">Borrador</SelectItem>
                 <SelectItem value="enviado">Enviado</SelectItem>
                 <SelectItem value="aprobado">Aprobado</SelectItem>
@@ -330,6 +330,9 @@ export default function PresupuestosPage() {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Nuevo Presupuesto</DialogTitle>
+            <DialogDescription>
+              Crea un nuevo presupuesto para un paciente
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
@@ -493,6 +496,9 @@ export default function PresupuestosPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Presupuesto {presupuestoDetalle?.numero}</DialogTitle>
+            <DialogDescription>
+              Detalle del presupuesto
+            </DialogDescription>
           </DialogHeader>
           {presupuestoDetalle && (
             <div className="space-y-4">
