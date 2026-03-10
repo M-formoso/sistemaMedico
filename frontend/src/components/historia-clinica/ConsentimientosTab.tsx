@@ -37,6 +37,7 @@ export function ConsentimientosTab({ pacienteId }: ConsentimientosTabProps) {
     firmado: false,
   })
   const [archivoSeleccionado, setArchivoSeleccionado] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { data: consentimientos = [], isLoading } = useQuery({
@@ -88,6 +89,7 @@ export function ConsentimientosTab({ pacienteId }: ConsentimientosTabProps) {
       firmado: false,
     })
     setArchivoSeleccionado(null)
+    setPreviewUrl(null)
     setIsDialogOpen(true)
   }
 
@@ -96,17 +98,32 @@ export function ConsentimientosTab({ pacienteId }: ConsentimientosTabProps) {
     setEditando(null)
     setFormData({})
     setArchivoSeleccionado(null)
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl)
+      setPreviewUrl(null)
+    }
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       setArchivoSeleccionado(file)
+      // Crear preview si es imagen
+      if (file.type.startsWith('image/')) {
+        const url = URL.createObjectURL(file)
+        setPreviewUrl(url)
+      } else {
+        setPreviewUrl(null)
+      }
     }
   }
 
   const removeSelectedFile = () => {
     setArchivoSeleccionado(null)
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl)
+      setPreviewUrl(null)
+    }
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -268,20 +285,31 @@ export function ConsentimientosTab({ pacienteId }: ConsentimientosTabProps) {
                 className="hidden"
               />
               {archivoSeleccionado ? (
-                <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <Paperclip className="h-4 w-4 text-green-600" />
-                  <span className="flex-1 text-sm text-green-700 truncate">
-                    {archivoSeleccionado.name}
-                  </span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={removeSelectedFile}
-                    className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                <div className="space-y-2">
+                  {previewUrl && (
+                    <div className="relative w-full h-40 bg-gray-100 rounded-lg overflow-hidden">
+                      <img
+                        src={previewUrl}
+                        alt="Preview"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <Paperclip className="h-4 w-4 text-green-600" />
+                    <span className="flex-1 text-sm text-green-700 truncate">
+                      {archivoSeleccionado.name}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={removeSelectedFile}
+                      className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <Button
