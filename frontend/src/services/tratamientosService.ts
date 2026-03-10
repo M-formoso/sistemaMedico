@@ -9,7 +9,7 @@ interface ListarParams {
 
 export const tratamientosService = {
   listar: async (params: ListarParams = {}): Promise<Tratamiento[]> => {
-    const { data } = await api.get('/tratamientos', { params })
+    const { data } = await api.get('/tratamientos/', { params })
     return data
   },
 
@@ -19,7 +19,7 @@ export const tratamientosService = {
   },
 
   crear: async (payload: TratamientoCreate): Promise<Tratamiento> => {
-    const { data } = await api.post('/tratamientos', payload)
+    const { data } = await api.post('/tratamientos/', payload)
     return data
   },
 
