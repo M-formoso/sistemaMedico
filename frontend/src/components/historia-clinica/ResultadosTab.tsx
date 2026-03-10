@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Edit, Trash2, Calendar, FileText, Download, Eye } from 'lucide-react'
+import { Plus, Edit, Trash2, Calendar, FileText, Eye, Upload, Paperclip, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -23,9 +23,10 @@ export function ResultadosTab({ pacienteId }: ResultadosTabProps) {
     nombre: '',
     descripcion: '',
     fecha: new Date().toISOString().split('T')[0],
-    archivo_url: '',
     notas: '',
   })
+  const [archivoSeleccionado, setArchivoSeleccionado] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { data: resultados = [], isLoading } = useQuery({
     queryKey: ['resultados', pacienteId],
@@ -33,7 +34,8 @@ export function ResultadosTab({ pacienteId }: ResultadosTabProps) {
   })
 
   const crearMutation = useMutation({
-    mutationFn: (data: ResultadoCreate) => historiaClinicaService.crearResultado(data),
+    mutationFn: ({ data, archivo }: { data: ResultadoCreate; archivo?: File }) =>
+      historiaClinicaService.crearResultadoConArchivo(data, archivo),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['resultados', pacienteId] })
       toast({ title: 'Resultado agregado correctamente' })
@@ -74,9 +76,9 @@ export function ResultadosTab({ pacienteId }: ResultadosTabProps) {
       nombre: '',
       descripcion: '',
       fecha: new Date().toISOString().split('T')[0],
-      archivo_url: '',
       notas: '',
     })
+    setArchivoSeleccionado(null)
     setIsDialogOpen(true)
   }
 
@@ -86,9 +88,9 @@ export function ResultadosTab({ pacienteId }: ResultadosTabProps) {
       nombre: resultado.nombre,
       descripcion: resultado.descripcion || '',
       fecha: resultado.fecha,
-      archivo_url: resultado.archivo_url || '',
       notas: resultado.notas || '',
     })
+    setArchivoSeleccionado(null)
     setIsDialogOpen(true)
   }
 
@@ -96,6 +98,21 @@ export function ResultadosTab({ pacienteId }: ResultadosTabProps) {
     setIsDialogOpen(false)
     setEditando(null)
     setFormData({})
+    setArchivoSeleccionado(null)
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setArchivoSeleccionado(file)
+    }
+  }
+
+  const removeSelectedFile = () => {
+    setArchivoSeleccionado(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -109,12 +126,14 @@ export function ResultadosTab({ pacienteId }: ResultadosTabProps) {
       actualizarMutation.mutate({ id: editando.id, data: formData })
     } else {
       crearMutation.mutate({
-        paciente_id: pacienteId,
-        nombre: formData.nombre,
-        descripcion: formData.descripcion,
-        fecha: formData.fecha || new Date().toISOString().split('T')[0],
-        archivo_url: formData.archivo_url,
-        notas: formData.notas,
+        data: {
+          paciente_id: pacienteId,
+          nombre: formData.nombre,
+          descripcion: formData.descripcion,
+          fecha: formData.fecha || new Date().toISOString().split('T')[0],
+          notas: formData.notas,
+        },
+        archivo: archivoSeleccionado || undefined,
       })
     }
   }
@@ -235,14 +254,47 @@ export function ResultadosTab({ pacienteId }: ResultadosTabProps) {
             </div>
 
             <div>
-              <Label>URL del Archivo (opcional)</Label>
-              <Input
-                value={formData.archivo_url}
-                onChange={(e) => setFormData({ ...formData, archivo_url: e.target.value })}
-                placeholder="https://..."
+              <Label>Archivo del Resultado (opcional)</Label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,image/*,application/pdf"
+                onChange={handleFileSelect}
+                className="hidden"
               />
+              {archivoSeleccionado ? (
+                <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <Paperclip className="h-4 w-4 text-green-600" />
+                  <span className="flex-1 text-sm text-green-700 truncate">
+                    {archivoSeleccionado.name}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={removeSelectedFile}
+                    className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-20 border-dashed"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <Upload className="h-5 w-5 text-gray-400" />
+                    <span className="text-sm text-gray-500">
+                      Click para adjuntar PDF o imagen
+                    </span>
+                  </div>
+                </Button>
+              )}
               <p className="text-xs text-gray-500 mt-1">
-                Puedes pegar el link de un PDF o imagen subido a Google Drive, Dropbox, etc.
+                Formatos aceptados: PDF, JPG, PNG
               </p>
             </div>
 

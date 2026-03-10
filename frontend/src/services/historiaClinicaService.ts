@@ -177,6 +177,48 @@ export const historiaClinicaService = {
     return data
   },
 
+  crearResultadoConArchivo: async (
+    payload: ResultadoCreate,
+    archivo?: File
+  ): Promise<Resultado> => {
+    const formData = new FormData()
+    formData.append('paciente_id', payload.paciente_id.toString())
+    formData.append('nombre', payload.nombre)
+    formData.append('fecha', payload.fecha)
+
+    if (payload.descripcion) {
+      formData.append('descripcion', payload.descripcion)
+    }
+    if (payload.estudio_id) {
+      formData.append('estudio_id', payload.estudio_id.toString())
+    }
+    if (payload.notas) {
+      formData.append('notas', payload.notas)
+    }
+    if (archivo) {
+      formData.append('file', archivo)
+    }
+
+    const { data } = await api.post('/resultados/con-archivo', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    return data
+  },
+
+  subirArchivoResultado: async (resultadoId: number, archivo: File): Promise<Resultado> => {
+    const formData = new FormData()
+    formData.append('file', archivo)
+
+    const { data } = await api.post(`/resultados/${resultadoId}/upload`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    return data
+  },
+
   actualizarResultado: async (id: number, payload: Partial<ResultadoCreate>): Promise<Resultado> => {
     const { data } = await api.put(`/resultados/${id}`, payload)
     return data
