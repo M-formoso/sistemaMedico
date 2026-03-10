@@ -37,6 +37,8 @@ class FotoResponse(BaseModel):
     zona: Optional[str] = None
     fecha: Optional[date] = None
     visible_paciente: bool
+    tratamiento_id: Optional[int] = None
+    tratamiento_nombre: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -46,6 +48,7 @@ class FotoResponse(BaseModel):
 async def subir_foto(
     paciente_id: int = Form(...),
     sesion_id: Optional[int] = Form(None),
+    tratamiento_id: Optional[int] = Form(None),
     tipo: str = Form("evolucion"),
     zona: Optional[str] = Form(None),
     descripcion: Optional[str] = Form(None),
@@ -93,6 +96,7 @@ async def subir_foto(
     foto = Foto(
         paciente_id=paciente_id,
         sesion_id=sesion_id,
+        tratamiento_id=tratamiento_id,
         url=url,
         public_id=public_id,
         tipo=tipo_foto,
@@ -104,13 +108,19 @@ async def subir_foto(
     db.commit()
     db.refresh(foto)
 
+    tratamiento_nombre = None
+    if foto.tratamiento:
+        tratamiento_nombre = foto.tratamiento.nombre
+
     return FotoResponse(
         id=foto.id,
         url=foto.url,
         tipo=foto.tipo.value,
         zona=foto.zona,
         fecha=foto.fecha,
-        visible_paciente=foto.visible_paciente
+        visible_paciente=foto.visible_paciente,
+        tratamiento_id=foto.tratamiento_id,
+        tratamiento_nombre=tratamiento_nombre
     )
 
 
@@ -118,6 +128,7 @@ async def subir_foto(
 def obtener_fotos_paciente(
     paciente_id: int,
     tipo: Optional[str] = None,
+    tratamiento_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_admin)
 ):
@@ -130,6 +141,9 @@ def obtener_fotos_paciente(
         except ValueError:
             pass
 
+    if tratamiento_id:
+        query = query.filter(Foto.tratamiento_id == tratamiento_id)
+
     fotos = query.order_by(Foto.fecha.desc()).all()
     return [
         FotoResponse(
@@ -138,7 +152,9 @@ def obtener_fotos_paciente(
             tipo=f.tipo.value if f.tipo else "evolucion",
             zona=f.zona,
             fecha=f.fecha,
-            visible_paciente=f.visible_paciente
+            visible_paciente=f.visible_paciente,
+            tratamiento_id=f.tratamiento_id,
+            tratamiento_nombre=f.tratamiento.nombre if f.tratamiento else None
         )
         for f in fotos
     ]

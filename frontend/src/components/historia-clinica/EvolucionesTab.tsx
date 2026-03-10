@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Edit, Trash2, Calendar, Weight, Activity } from 'lucide-react'
+import { Plus, Edit, Trash2, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -23,8 +23,6 @@ export function EvolucionesTab({ pacienteId }: EvolucionesTabProps) {
     fecha: new Date().toISOString().split('T')[0],
     titulo: '',
     descripcion: '',
-    peso: '',
-    tension_arterial: '',
   })
 
   const { data: evoluciones = [], isLoading } = useQuery({
@@ -74,8 +72,6 @@ export function EvolucionesTab({ pacienteId }: EvolucionesTabProps) {
       fecha: new Date().toISOString().split('T')[0],
       titulo: '',
       descripcion: '',
-      peso: '',
-      tension_arterial: '',
     })
     setIsDialogOpen(true)
   }
@@ -86,8 +82,6 @@ export function EvolucionesTab({ pacienteId }: EvolucionesTabProps) {
       fecha: evolucion.fecha,
       titulo: evolucion.titulo || '',
       descripcion: evolucion.descripcion,
-      peso: evolucion.peso || '',
-      tension_arterial: evolucion.tension_arterial || '',
     })
     setIsDialogOpen(true)
   }
@@ -113,8 +107,6 @@ export function EvolucionesTab({ pacienteId }: EvolucionesTabProps) {
         fecha: formData.fecha || new Date().toISOString().split('T')[0],
         descripcion: formData.descripcion,
         titulo: formData.titulo,
-        peso: formData.peso,
-        tension_arterial: formData.tension_arterial,
       })
     }
   }
@@ -178,22 +170,6 @@ export function EvolucionesTab({ pacienteId }: EvolucionesTabProps) {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-700 whitespace-pre-wrap">{evolucion.descripcion}</p>
-                {(evolucion.peso || evolucion.tension_arterial) && (
-                  <div className="flex gap-4 mt-3 text-sm text-gray-500">
-                    {evolucion.peso && (
-                      <span className="flex items-center gap-1">
-                        <Weight className="h-4 w-4" />
-                        Peso: {evolucion.peso}
-                      </span>
-                    )}
-                    {evolucion.tension_arterial && (
-                      <span className="flex items-center gap-1">
-                        <Activity className="h-4 w-4" />
-                        TA: {evolucion.tension_arterial}
-                      </span>
-                    )}
-                  </div>
-                )}
               </CardContent>
             </Card>
           ))}
@@ -233,28 +209,9 @@ export function EvolucionesTab({ pacienteId }: EvolucionesTabProps) {
                 value={formData.descripcion}
                 onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
                 placeholder="Descripción de la evolución..."
-                rows={6}
+                rows={10}
                 required
               />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Peso (opcional)</Label>
-                <Input
-                  value={formData.peso}
-                  onChange={(e) => setFormData({ ...formData, peso: e.target.value })}
-                  placeholder="Ej: 65kg"
-                />
-              </div>
-              <div>
-                <Label>Tensión Arterial (opcional)</Label>
-                <Input
-                  value={formData.tension_arterial}
-                  onChange={(e) => setFormData({ ...formData, tension_arterial: e.target.value })}
-                  placeholder="Ej: 120/80"
-                />
-              </div>
             </div>
 
             <div className="flex justify-end gap-2 pt-4">

@@ -199,6 +199,51 @@ export const historiaClinicaService = {
     return data
   },
 
+  crearConsentimientoConArchivo: async (
+    payload: ConsentimientoCreate,
+    archivo?: File
+  ): Promise<Consentimiento> => {
+    const formData = new FormData()
+    formData.append('paciente_id', payload.paciente_id.toString())
+    formData.append('nombre', payload.nombre)
+    formData.append('tipo', payload.tipo || 'tratamiento')
+
+    if (payload.descripcion) {
+      formData.append('descripcion', payload.descripcion)
+    }
+    if (payload.tratamiento_id) {
+      formData.append('tratamiento_id', payload.tratamiento_id.toString())
+    }
+    if (payload.firmado !== undefined) {
+      formData.append('firmado', payload.firmado.toString())
+    }
+    if (payload.fecha_vencimiento) {
+      formData.append('fecha_vencimiento', payload.fecha_vencimiento)
+    }
+    if (archivo) {
+      formData.append('file', archivo)
+    }
+
+    const { data } = await api.post('/consentimientos/con-archivo', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    return data
+  },
+
+  subirArchivoConsentimiento: async (consentimientoId: number, archivo: File): Promise<Consentimiento> => {
+    const formData = new FormData()
+    formData.append('file', archivo)
+
+    const { data } = await api.post(`/consentimientos/${consentimientoId}/upload`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    return data
+  },
+
   firmarConsentimiento: async (id: number): Promise<Consentimiento> => {
     const { data } = await api.post(`/consentimientos/${id}/firmar`)
     return data

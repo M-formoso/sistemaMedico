@@ -3,7 +3,6 @@ import { Camera, Calendar, Eye, Upload, Trash2, X, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -21,9 +20,11 @@ import {
 } from '@/components/ui/dialog'
 import { pacientesService } from '@/services/pacientesService'
 import { fotosService, type Foto } from '@/services/fotosService'
+import { tratamientosService } from '@/services/tratamientosService'
 import { formatearFecha } from '@/utils/formatters'
 import { useState, useRef } from 'react'
 import { useToast } from '@/hooks/useToast'
+import type { Tratamiento } from '@/types'
 
 interface FotosTabProps {
   pacienteId: number
@@ -32,14 +33,20 @@ interface FotosTabProps {
 export function FotosTab({ pacienteId }: FotosTabProps) {
   const [fotoAmpliada, setFotoAmpliada] = useState<Foto | null>(null)
   const [isUploadOpen, setIsUploadOpen] = useState(false)
-  const [uploadTipo, setUploadTipo] = useState<'antes' | 'despues' | 'evolucion'>('evolucion')
-  const [uploadZona, setUploadZona] = useState('')
+  const [uploadTipo, setUploadTipo] = useState<'antes' | 'despues' | 'evolucion'>('antes')
+  const [uploadTratamientoId, setUploadTratamientoId] = useState<string>('')
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const queryClient = useQueryClient()
   const { toast } = useToast()
+
+  // Obtener lista de tratamientos
+  const { data: tratamientos = [] } = useQuery({
+    queryKey: ['tratamientos'],
+    queryFn: () => tratamientosService.listar({ solo_activos: true }),
+  })
 
   const { data: historial, isLoading } = useQuery({
     queryKey: ['pacientes', pacienteId, 'historial'],
@@ -62,7 +69,7 @@ export function FotosTab({ pacienteId }: FotosTabProps) {
       return fotosService.subir({
         pacienteId,
         tipo: uploadTipo,
-        zona: uploadZona || undefined,
+        tratamientoId: uploadTratamientoId ? parseInt(uploadTratamientoId) : undefined,
         file,
       })
     },
@@ -114,7 +121,8 @@ export function FotosTab({ pacienteId }: FotosTabProps) {
       previewUrls.forEach(url => URL.revokeObjectURL(url))
       setPreviewUrls([])
       setIsUploadOpen(false)
-      setUploadZona('')
+      setUploadTratamientoId('')
+      setUploadTipo('antes')
     } catch (error) {
       toast({
         title: 'Error al subir fotos',
@@ -139,22 +147,20 @@ export function FotosTab({ pacienteId }: FotosTabProps) {
     )
   }
 
-  // Agrupar por tipo
-  const fotosPorTipo: Record<string, Foto[]> = {}
+  // Agrupar por tratamiento
+  const fotosPorTratamiento: Record<string, Foto[]> = {}
   fotos.forEach((foto) => {
-    const tipo = foto.tipo || 'otros'
-    if (!fotosPorTipo[tipo]) {
-      fotosPorTipo[tipo] = []
+    const tratamientoKey = foto.tratamiento_nombre || 'Sin tratamiento'
+    if (!fotosPorTratamiento[tratamientoKey]) {
+      fotosPorTratamiento[tratamientoKey] = []
     }
-    fotosPorTipo[tipo].push(foto)
+    fotosPorTratamiento[tratamientoKey].push(foto)
   })
 
   const tipoLabels: Record<string, string> = {
-    antes: 'Antes del Tratamiento',
-    despues: 'Después del Tratamiento',
-    durante: 'Durante el Tratamiento',
-    seguimiento: 'Seguimiento',
-    otros: 'Otras Fotos',
+    antes: 'Antes',
+    despues: 'Después',
+    evolucion: 'Evolución',
   }
 
   return (
@@ -173,22 +179,22 @@ export function FotosTab({ pacienteId }: FotosTabProps) {
             <Camera className="h-12 w-12 mx-auto text-gray-300 mb-3" />
             <p>No hay fotos registradas para este paciente.</p>
             <p className="text-sm mt-1">
-              Las fotos se agregan desde la vista de sesiones/turnos.
+              Haz clic en "Subir Fotos" para agregar fotos de antes/después.
             </p>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-8">
-          {Object.entries(fotosPorTipo).map(([tipo, fotosDelTipo]) => (
-            <div key={tipo}>
+          {Object.entries(fotosPorTratamiento).map(([tratamiento, fotosDelTratamiento]) => (
+            <div key={tratamiento}>
               <h4 className="font-medium text-gray-700 mb-3">
-                {tipoLabels[tipo] || tipo}
+                {tratamiento}
                 <Badge variant="secondary" className="ml-2">
-                  {fotosDelTipo.length}
+                  {fotosDelTratamiento.length}
                 </Badge>
               </h4>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {fotosDelTipo.map((foto) => (
+                {fotosDelTratamiento.map((foto) => (
                   <Card
                     key={foto.id}
                     className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group relative"
@@ -202,6 +208,20 @@ export function FotosTab({ pacienteId }: FotosTabProps) {
                       />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                         <Eye className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                      {/* Badge de tipo */}
+                      <div className="absolute top-2 left-2">
+                        <Badge
+                          className={
+                            foto.tipo === 'antes'
+                              ? 'bg-orange-500 text-white'
+                              : foto.tipo === 'despues'
+                              ? 'bg-green-500 text-white'
+                              : 'bg-blue-500 text-white'
+                          }
+                        >
+                          {tipoLabels[foto.tipo] || foto.tipo}
+                        </Badge>
                       </div>
                       {/* Botón eliminar */}
                       <button
@@ -217,11 +237,6 @@ export function FotosTab({ pacienteId }: FotosTabProps) {
                           <Calendar className="h-3 w-3" />
                           {formatearFecha(foto.fecha)}
                         </div>
-                        {foto.zona && (
-                          <p className="text-xs text-gray-600 mt-1 truncate">
-                            {foto.zona}
-                          </p>
-                        )}
                       </CardContent>
                     )}
                   </Card>
@@ -232,38 +247,73 @@ export function FotosTab({ pacienteId }: FotosTabProps) {
         </div>
       )}
 
-      {/* Comparación Antes/Después */}
-      {fotosPorTipo['antes']?.length > 0 && fotosPorTipo['despues']?.length > 0 && (
-        <div className="mt-8">
-          <h4 className="font-medium text-gray-700 mb-3">Comparación Antes / Después</h4>
-          <div className="grid grid-cols-2 gap-4">
-            <Card className="overflow-hidden">
-              <div className="bg-gray-100 px-3 py-1 text-center text-sm font-medium">
-                ANTES
-              </div>
-              <div className="aspect-square">
-                <img
-                  src={fotosPorTipo['antes'][0].url}
-                  alt="Antes"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </Card>
-            <Card className="overflow-hidden">
-              <div className="bg-primary-100 px-3 py-1 text-center text-sm font-medium text-primary-700">
-                DESPUÉS
-              </div>
-              <div className="aspect-square">
-                <img
-                  src={fotosPorTipo['despues'][0].url}
-                  alt="Después"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </Card>
+      {/* Comparación Antes/Después por tratamiento */}
+      {Object.entries(fotosPorTratamiento).map(([tratamiento, fotosDelTratamiento]) => {
+        const fotosAntes = fotosDelTratamiento.filter(f => f.tipo === 'antes')
+        const fotosDespues = fotosDelTratamiento.filter(f => f.tipo === 'despues')
+
+        if (fotosAntes.length === 0 || fotosDespues.length === 0) return null
+
+        return (
+          <div key={`comparacion-${tratamiento}`} className="mt-8">
+            <h4 className="font-medium text-gray-700 mb-3 flex items-center gap-2">
+              Comparación Antes / Después
+              <Badge variant="outline" className="text-primary-600">
+                {tratamiento}
+              </Badge>
+            </h4>
+            <div className="space-y-4">
+              {fotosAntes.map((fotoAntes, index) => {
+                const fotoDespues = fotosDespues[index] || fotosDespues[0]
+                return (
+                  <div key={`comp-${fotoAntes.id}`} className="grid grid-cols-2 gap-4">
+                    <Card className="overflow-hidden">
+                      <div className="bg-orange-100 px-3 py-2 text-center text-sm font-medium text-orange-700">
+                        ANTES
+                        {fotoAntes.fecha && (
+                          <span className="ml-2 text-xs text-orange-500">
+                            {formatearFecha(fotoAntes.fecha)}
+                          </span>
+                        )}
+                      </div>
+                      <div
+                        className="aspect-square cursor-pointer"
+                        onClick={() => setFotoAmpliada(fotoAntes)}
+                      >
+                        <img
+                          src={fotoAntes.url}
+                          alt="Antes"
+                          className="w-full h-full object-cover hover:scale-105 transition-transform"
+                        />
+                      </div>
+                    </Card>
+                    <Card className="overflow-hidden">
+                      <div className="bg-green-100 px-3 py-2 text-center text-sm font-medium text-green-700">
+                        DESPUÉS
+                        {fotoDespues.fecha && (
+                          <span className="ml-2 text-xs text-green-500">
+                            {formatearFecha(fotoDespues.fecha)}
+                          </span>
+                        )}
+                      </div>
+                      <div
+                        className="aspect-square cursor-pointer"
+                        onClick={() => setFotoAmpliada(fotoDespues)}
+                      >
+                        <img
+                          src={fotoDespues.url}
+                          alt="Después"
+                          className="w-full h-full object-cover hover:scale-105 transition-transform"
+                        />
+                      </div>
+                    </Card>
+                  </div>
+                )
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        )
+      })}
 
       {/* Dialog para foto ampliada */}
       <Dialog open={!!fotoAmpliada} onOpenChange={() => setFotoAmpliada(null)}>
@@ -304,7 +354,24 @@ export function FotosTab({ pacienteId }: FotosTabProps) {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {/* Selector de tipo */}
+            {/* Selector de tratamiento */}
+            <div className="space-y-2">
+              <Label>Tratamiento *</Label>
+              <Select value={uploadTratamientoId} onValueChange={setUploadTratamientoId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar tratamiento..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {tratamientos.map((tratamiento: Tratamiento) => (
+                    <SelectItem key={tratamiento.id} value={tratamiento.id.toString()}>
+                      {tratamiento.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Selector de tipo (antes/después) */}
             <div className="space-y-2">
               <Label>Tipo de foto *</Label>
               <Select value={uploadTipo} onValueChange={(v) => setUploadTipo(v as typeof uploadTipo)}>
@@ -332,16 +399,6 @@ export function FotosTab({ pacienteId }: FotosTabProps) {
                   </SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            {/* Zona corporal */}
-            <div className="space-y-2">
-              <Label>Zona corporal (opcional)</Label>
-              <Input
-                placeholder="Ej: Rostro, Abdomen, Piernas..."
-                value={uploadZona}
-                onChange={(e) => setUploadZona(e.target.value)}
-              />
             </div>
 
             {/* Input de archivos */}

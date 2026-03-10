@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Edit, Trash2, Calendar, FileCheck, FileX, Check, Eye } from 'lucide-react'
+import { Plus, Edit, Trash2, Calendar, FileCheck, FileX, Check, Eye, Upload, Paperclip, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -34,9 +34,10 @@ export function ConsentimientosTab({ pacienteId }: ConsentimientosTabProps) {
     tipo: 'tratamiento',
     nombre: '',
     descripcion: '',
-    archivo_url: '',
     firmado: false,
   })
+  const [archivoSeleccionado, setArchivoSeleccionado] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { data: consentimientos = [], isLoading } = useQuery({
     queryKey: ['consentimientos', pacienteId],
@@ -44,7 +45,8 @@ export function ConsentimientosTab({ pacienteId }: ConsentimientosTabProps) {
   })
 
   const crearMutation = useMutation({
-    mutationFn: (data: ConsentimientoCreate) => historiaClinicaService.crearConsentimiento(data),
+    mutationFn: ({ data, archivo }: { data: ConsentimientoCreate; archivo?: File }) =>
+      historiaClinicaService.crearConsentimientoConArchivo(data, archivo),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['consentimientos', pacienteId] })
       toast({ title: 'Consentimiento creado correctamente' })
@@ -83,9 +85,9 @@ export function ConsentimientosTab({ pacienteId }: ConsentimientosTabProps) {
       tipo: 'tratamiento',
       nombre: '',
       descripcion: '',
-      archivo_url: '',
       firmado: false,
     })
+    setArchivoSeleccionado(null)
     setIsDialogOpen(true)
   }
 
@@ -93,6 +95,21 @@ export function ConsentimientosTab({ pacienteId }: ConsentimientosTabProps) {
     setIsDialogOpen(false)
     setEditando(null)
     setFormData({})
+    setArchivoSeleccionado(null)
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setArchivoSeleccionado(file)
+    }
+  }
+
+  const removeSelectedFile = () => {
+    setArchivoSeleccionado(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -103,12 +120,14 @@ export function ConsentimientosTab({ pacienteId }: ConsentimientosTabProps) {
     }
 
     crearMutation.mutate({
-      paciente_id: pacienteId,
-      tipo: formData.tipo,
-      nombre: formData.nombre,
-      descripcion: formData.descripcion,
-      archivo_url: formData.archivo_url,
-      firmado: formData.firmado,
+      data: {
+        paciente_id: pacienteId,
+        tipo: formData.tipo,
+        nombre: formData.nombre,
+        descripcion: formData.descripcion,
+        firmado: formData.firmado,
+      },
+      archivo: archivoSeleccionado || undefined,
     })
   }
 
@@ -240,14 +259,47 @@ export function ConsentimientosTab({ pacienteId }: ConsentimientosTabProps) {
             </div>
 
             <div>
-              <Label>URL del Documento (opcional)</Label>
-              <Input
-                value={formData.archivo_url}
-                onChange={(e) => setFormData({ ...formData, archivo_url: e.target.value })}
-                placeholder="https://..."
+              <Label>Archivo del Documento (opcional)</Label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,image/*,application/pdf"
+                onChange={handleFileSelect}
+                className="hidden"
               />
+              {archivoSeleccionado ? (
+                <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <Paperclip className="h-4 w-4 text-green-600" />
+                  <span className="flex-1 text-sm text-green-700 truncate">
+                    {archivoSeleccionado.name}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={removeSelectedFile}
+                    className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-20 border-dashed"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <Upload className="h-5 w-5 text-gray-400" />
+                    <span className="text-sm text-gray-500">
+                      Click para adjuntar PDF o imagen
+                    </span>
+                  </div>
+                </Button>
+              )}
               <p className="text-xs text-gray-500 mt-1">
-                Link al documento PDF del consentimiento
+                Formatos aceptados: PDF, JPG, PNG
               </p>
             </div>
 

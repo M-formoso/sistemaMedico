@@ -24,6 +24,7 @@ class Foto(Base):
 
     paciente_id = Column(Integer, ForeignKey("pacientes.id"), nullable=False, index=True)
     sesion_id = Column(Integer, ForeignKey("sesiones.id"), nullable=True)
+    tratamiento_id = Column(Integer, ForeignKey("tratamientos.id"), nullable=True, index=True)
 
     url = Column(String(500), nullable=False)  # URL de Cloudinary
     public_id = Column(String(255), nullable=True)  # ID de Cloudinary para eliminación
@@ -43,6 +44,7 @@ class Foto(Base):
     # Relaciones
     paciente = relationship("Paciente", back_populates="fotos")
     sesion = relationship("Sesion", back_populates="fotos")
+    tratamiento = relationship("Tratamiento")
 
     def __repr__(self):
         return f"<Foto {self.tipo} - {self.zona}>"

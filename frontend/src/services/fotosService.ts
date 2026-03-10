@@ -7,11 +7,14 @@ export interface Foto {
   zona?: string
   fecha?: string
   visible_paciente: boolean
+  tratamiento_id?: number
+  tratamiento_nombre?: string
 }
 
 export interface SubirFotoParams {
   pacienteId: number
   sesionId?: number
+  tratamientoId?: number
   tipo: 'antes' | 'despues' | 'evolucion'
   zona?: string
   file: File
@@ -32,6 +35,9 @@ export const fotosService = {
 
     if (params.sesionId) {
       formData.append('sesion_id', params.sesionId.toString())
+    }
+    if (params.tratamientoId) {
+      formData.append('tratamiento_id', params.tratamientoId.toString())
     }
     if (params.zona) {
       formData.append('zona', params.zona)
