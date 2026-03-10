@@ -33,7 +33,10 @@ class Sesion(Base):
     hora_inicio = Column(Time, nullable=True)
     hora_fin = Column(Time, nullable=True)
 
-    estado = Column(Enum(EstadoSesion), default=EstadoSesion.PROGRAMADA)
+    estado = Column(
+        Enum(EstadoSesion, values_callable=lambda x: [e.value for e in x]),
+        default=EstadoSesion.PROGRAMADA
+    )
 
     precio_cobrado = Column(Numeric(12, 2), nullable=True)
     descuento_aplicado = Column(Numeric(5, 2), default=0)
