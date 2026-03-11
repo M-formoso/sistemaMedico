@@ -1,5 +1,6 @@
 from datetime import datetime, date
 from enum import Enum as PyEnum
+from typing import Optional
 
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Date, Text, Enum
 from sqlalchemy.orm import relationship
@@ -67,7 +68,7 @@ class Paciente(Base):
         return f"{self.nombre} {self.apellido}"
 
     @property
-    def edad(self) -> int | None:
+    def edad(self) -> Optional[int]:
         """Calcula la edad actual del paciente."""
         if not self.fecha_nacimiento:
             return None
