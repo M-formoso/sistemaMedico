@@ -17,6 +17,7 @@ import {
   Bell,
   Search,
   FileText,
+  KeyRound,
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { cn } from '@/lib/utils'
@@ -33,6 +34,7 @@ const navigation = [
   { name: 'Materiales', href: '/materiales', icon: Package },
   { name: 'Finanzas', href: '/finanzas', icon: DollarSign },
   { name: 'Reportes', href: '/reportes', icon: BarChart3 },
+  { name: 'Usuarios', href: '/usuarios', icon: KeyRound },
   { name: 'Configuración', href: '/configuracion', icon: Settings },
 ]
 

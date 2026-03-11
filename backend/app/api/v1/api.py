@@ -21,6 +21,7 @@ from app.api.v1.endpoints import (
     presupuestos,
     turnos_recurrentes,
     integraciones,
+    usuarios,
 )
 
 api_router = APIRouter()
@@ -29,6 +30,7 @@ api_router = APIRouter()
 api_router.include_router(auth.router, prefix="/auth", tags=["Autenticación"])
 
 # Módulos principales (solo administradora)
+api_router.include_router(usuarios.router, prefix="/usuarios", tags=["Usuarios"])
 api_router.include_router(pacientes.router, prefix="/pacientes", tags=["Pacientes"])
 api_router.include_router(profesionales.router, prefix="/profesionales", tags=["Profesionales"])
 api_router.include_router(tratamientos.router, prefix="/tratamientos", tags=["Tratamientos"])
