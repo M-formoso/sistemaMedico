@@ -10,46 +10,46 @@ interface ListarParams {
 
 export const materialesService = {
   listar: async (params: ListarParams = {}): Promise<Material[]> => {
-    const { data } = await api.get('/materiales', { params })
+    const { data } = await api.get('/materiales/', { params })
     return data
   },
 
   obtenerPorId: async (id: number): Promise<Material> => {
-    const { data } = await api.get(`/materiales/${id}`)
+    const { data } = await api.get(`/materiales/${id}/`)
     return data
   },
 
   crear: async (payload: MaterialCreate): Promise<Material> => {
-    const { data } = await api.post('/materiales', payload)
+    const { data } = await api.post('/materiales/', payload)
     return data
   },
 
   actualizar: async (id: number, payload: MaterialUpdate): Promise<Material> => {
-    const { data } = await api.put(`/materiales/${id}`, payload)
+    const { data } = await api.put(`/materiales/${id}/`, payload)
     return data
   },
 
   eliminar: async (id: number): Promise<void> => {
-    await api.delete(`/materiales/${id}`)
+    await api.delete(`/materiales/${id}/`)
   },
 
   obtenerStockBajo: async (): Promise<Material[]> => {
-    const { data } = await api.get('/materiales/stock-bajo')
+    const { data } = await api.get('/materiales/stock-bajo/')
     return data
   },
 
   obtenerValorTotal: async () => {
-    const { data } = await api.get('/materiales/valor-total')
+    const { data } = await api.get('/materiales/valor-total/')
     return data
   },
 
   registrarMovimiento: async (payload: MovimientoStockCreate): Promise<MovimientoStock> => {
-    const { data } = await api.post('/materiales/movimiento', payload)
+    const { data } = await api.post('/materiales/movimiento/', payload)
     return data
   },
 
   obtenerMovimientos: async (id: number, skip = 0, limit = 50): Promise<MovimientoStock[]> => {
-    const { data } = await api.get(`/materiales/${id}/movimientos`, {
+    const { data } = await api.get(`/materiales/${id}/movimientos/`, {
       params: { skip, limit }
     })
     return data
