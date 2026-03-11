@@ -73,8 +73,8 @@ export default function Login() {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Logo */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-primary-700">MedEstética</h1>
-            <p className="text-gray-500 mt-2">Sistema de Gestión</p>
+            <img src="/logo.png" alt="MedEstética" className="h-20 mx-auto mb-4" />
+            <p className="text-gray-500">Sistema de Gestión</p>
           </div>
 
           {/* Form */}

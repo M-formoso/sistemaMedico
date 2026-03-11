@@ -65,8 +65,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           onClick={() => setSidebarOpen(false)}
         />
         <div className="fixed inset-y-0 left-0 w-72 bg-white shadow-2xl">
-          <div className="flex h-16 items-center justify-between px-6 border-b bg-gradient-to-r from-primary-600 to-primary-700">
-            <span className="text-xl font-bold text-white">MedEstética</span>
+          <div className="flex h-16 items-center justify-between px-4 border-b bg-white">
+            <img src="/logo.png" alt="MedEstética" className="h-10 object-contain" />
             <button onClick={() => setSidebarOpen(false)} className="text-white/80 hover:text-white">
               <X className="h-6 w-6" />
             </button>
@@ -104,12 +104,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       >
         <div className="flex flex-col flex-grow bg-white border-r shadow-xl">
           {/* Logo */}
-          <div className="flex h-16 items-center px-6 border-b bg-gradient-to-r from-primary-600 to-primary-700">
+          <div className="flex h-16 items-center justify-center px-4 border-b bg-white">
             {!sidebarCollapsed && (
-              <span className="text-xl font-bold text-white tracking-tight">MedEstética</span>
+              <img src="/logo.png" alt="MedEstética" className="h-12 object-contain" />
             )}
             {sidebarCollapsed && (
-              <span className="text-xl font-bold text-white mx-auto">M</span>
+              <img src="/favicon.png" alt="MedEstética" className="h-10 object-contain" />
             )}
           </div>
 
