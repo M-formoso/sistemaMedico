@@ -36,7 +36,7 @@ export default function PortalPagos() {
   const { data: pagos = [], isLoading: loadingPagos } = useQuery({
     queryKey: ['portal', 'mis-pagos'],
     queryFn: async () => {
-      const { data } = await api.get('/portal/mis-pagos')
+      const { data } = await api.get('/portal/mis-pagos/')
       return data as Pago[]
     },
   })
@@ -44,7 +44,7 @@ export default function PortalPagos() {
   const { data: saldo, isLoading: loadingSaldo } = useQuery({
     queryKey: ['portal', 'mi-saldo'],
     queryFn: async () => {
-      const { data } = await api.get('/portal/mi-saldo')
+      const { data } = await api.get('/portal/mi-saldo/')
       return data as Saldo
     },
   })

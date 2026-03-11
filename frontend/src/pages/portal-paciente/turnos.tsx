@@ -22,7 +22,7 @@ export default function PortalTurnos() {
   const { data: sesiones = [], isLoading } = useQuery({
     queryKey: ['portal', 'mis-sesiones'],
     queryFn: async () => {
-      const { data } = await api.get('/portal/mis-sesiones')
+      const { data } = await api.get('/portal/mis-sesiones/')
       return data as Sesion[]
     },
   })

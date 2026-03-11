@@ -22,7 +22,7 @@ export default function PortalFotos() {
   const { data: fotos = [], isLoading } = useQuery({
     queryKey: ['portal', 'mis-fotos'],
     queryFn: async () => {
-      const { data } = await api.get('/portal/mis-fotos')
+      const { data } = await api.get('/portal/mis-fotos/')
       return data as Foto[]
     },
   })

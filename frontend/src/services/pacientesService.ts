@@ -14,8 +14,8 @@ export const pacientesService = {
     return data
   },
 
-  obtenerPorId: async (id: number): Promise<Paciente> => {
-    const { data } = await api.get(`/pacientes/${id}`)
+  obtenerPorId: async (id: number | string): Promise<Paciente> => {
+    const { data } = await api.get(`/pacientes/${id}/`)
     return data
   },
 
@@ -24,22 +24,22 @@ export const pacientesService = {
     return data
   },
 
-  actualizar: async (id: number, payload: PacienteUpdate): Promise<Paciente> => {
-    const { data } = await api.put(`/pacientes/${id}`, payload)
+  actualizar: async (id: number | string, payload: PacienteUpdate): Promise<Paciente> => {
+    const { data } = await api.put(`/pacientes/${id}/`, payload)
     return data
   },
 
-  eliminar: async (id: number): Promise<void> => {
-    await api.delete(`/pacientes/${id}`)
+  eliminar: async (id: number | string): Promise<void> => {
+    await api.delete(`/pacientes/${id}/`)
   },
 
-  obtenerHistorial: async (id: number) => {
-    const { data } = await api.get(`/pacientes/${id}/historial`)
+  obtenerHistorial: async (id: number | string) => {
+    const { data } = await api.get(`/pacientes/${id}/historial/`)
     return data
   },
 
-  crearCredenciales: async (id: number, email: string, password: string) => {
-    const { data } = await api.post(`/pacientes/${id}/credenciales`, { email, password })
+  crearCredenciales: async (id: number | string, email: string, password: string) => {
+    const { data } = await api.post(`/pacientes/${id}/credenciales/`, { email, password })
     return data
   },
 }

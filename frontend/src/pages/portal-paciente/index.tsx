@@ -27,7 +27,7 @@ export default function PortalHome() {
   const { data: historial, isLoading: loadingHistorial } = useQuery({
     queryKey: ['portal', 'mi-historial'],
     queryFn: async () => {
-      const { data } = await api.get('/portal/mi-historial')
+      const { data } = await api.get('/portal/mi-historial/')
       return data
     },
   })
@@ -35,7 +35,7 @@ export default function PortalHome() {
   const { data: sesiones = [], isLoading: loadingSesiones } = useQuery({
     queryKey: ['portal', 'mis-sesiones'],
     queryFn: async () => {
-      const { data } = await api.get('/portal/mis-sesiones')
+      const { data } = await api.get('/portal/mis-sesiones/')
       return data
     },
   })
@@ -43,7 +43,7 @@ export default function PortalHome() {
   const { data: saldo } = useQuery({
     queryKey: ['portal', 'mi-saldo'],
     queryFn: async () => {
-      const { data } = await api.get('/portal/mi-saldo')
+      const { data } = await api.get('/portal/mi-saldo/')
       return data
     },
   })

@@ -1,24 +1,90 @@
-import { useQuery } from '@tanstack/react-query'
-import { User, Calendar, Phone, Mail, FileText, Clock, CreditCard, FolderOpen, CalendarCheck, History, RefreshCw } from 'lucide-react'
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { User, Calendar, Phone, Mail, FileText, Clock, CreditCard, FolderOpen, CalendarCheck, History, RefreshCw, Key, Eye, EyeOff, Copy, Check } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { pacientesService } from '@/services/pacientesService'
 import { sesionesService } from '@/services/sesionesService'
 import { turnosRecurrentesService } from '@/services/turnosRecurrentesService'
 import { formatearFecha, formatearMonto } from '@/utils/formatters'
 import { HistoriaClinicaTabs } from '@/components/historia-clinica/HistoriaClinicaTabs'
+import { toast } from '@/hooks/useToast'
 import type { Paciente, Sesion } from '@/types'
 
 interface PacienteDetailProps {
   pacienteId: string
 }
 
+// Generar contraseña aleatoria
+function generarPassword() {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let password = ''
+  for (let i = 0; i < 8; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return password
+}
+
 export function PacienteDetail({ pacienteId }: PacienteDetailProps) {
+  const queryClient = useQueryClient()
+  const [isCredencialesDialogOpen, setIsCredencialesDialogOpen] = useState(false)
+  const [credencialesEmail, setCredencialesEmail] = useState('')
+  const [credencialesPassword, setCredencialesPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [credencialesCreadas, setCredencialesCreadas] = useState(false)
+  const [copiedField, setCopiedField] = useState<string | null>(null)
+
   const { data: paciente, isLoading } = useQuery({
     queryKey: ['pacientes', pacienteId],
     queryFn: () => pacientesService.obtenerPorId(pacienteId),
   })
+
+  const crearCredencialesMutation = useMutation({
+    mutationFn: () => pacientesService.crearCredenciales(
+      parseInt(pacienteId),
+      credencialesEmail,
+      credencialesPassword
+    ),
+    onSuccess: () => {
+      setCredencialesCreadas(true)
+      queryClient.invalidateQueries({ queryKey: ['pacientes', pacienteId] })
+      toast({ title: 'Credenciales creadas correctamente' })
+    },
+    onError: (error: { response?: { data?: { detail?: string } } }) => {
+      toast({
+        title: 'Error al crear credenciales',
+        description: error.response?.data?.detail || 'Ocurrió un error',
+        variant: 'destructive'
+      })
+    },
+  })
+
+  const abrirDialogCredenciales = () => {
+    setCredencialesEmail(paciente?.email || '')
+    setCredencialesPassword(generarPassword())
+    setCredencialesCreadas(false)
+    setIsCredencialesDialogOpen(true)
+  }
+
+  const handleCrearCredenciales = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!credencialesEmail || !credencialesPassword) {
+      toast({ title: 'Complete todos los campos', variant: 'destructive' })
+      return
+    }
+    crearCredencialesMutation.mutate()
+  }
+
+  const copiarAlPortapapeles = (texto: string, campo: string) => {
+    navigator.clipboard.writeText(texto)
+    setCopiedField(campo)
+    setTimeout(() => setCopiedField(null), 2000)
+  }
 
   const { data: historial } = useQuery({
     queryKey: ['pacientes', pacienteId, 'historial'],
@@ -112,9 +178,133 @@ export function PacienteDetail({ pacienteId }: PacienteDetailProps) {
                 )}
               </div>
             </div>
+            {/* Botón Crear Acceso al Portal */}
+            <div className="ml-auto">
+              <Button
+                variant="outline"
+                onClick={abrirDialogCredenciales}
+                className="flex items-center gap-2"
+              >
+                <Key className="h-4 w-4" />
+                Crear Acceso Portal
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Dialog: Crear Credenciales de Acceso */}
+      <Dialog open={isCredencialesDialogOpen} onOpenChange={setIsCredencialesDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Crear Acceso al Portal</DialogTitle>
+            <DialogDescription>
+              Crea credenciales para que {paciente.nombre} pueda acceder al portal de pacientes.
+            </DialogDescription>
+          </DialogHeader>
+
+          {!credencialesCreadas ? (
+            <form onSubmit={handleCrearCredenciales} className="space-y-4">
+              <div>
+                <Label>Email de acceso</Label>
+                <Input
+                  type="email"
+                  value={credencialesEmail}
+                  onChange={(e) => setCredencialesEmail(e.target.value)}
+                  placeholder="email@ejemplo.com"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label>Contraseña</Label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      type={showPassword ? 'text' : 'password'}
+                      value={credencialesPassword}
+                      onChange={(e) => setCredencialesPassword(e.target.value)}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setCredencialesPassword(generarPassword())}
+                  >
+                    Generar
+                  </Button>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsCredencialesDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={crearCredencialesMutation.isPending}>
+                  {crearCredencialesMutation.isPending ? 'Creando...' : 'Crear Credenciales'}
+                </Button>
+              </DialogFooter>
+            </form>
+          ) : (
+            <div className="space-y-4">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <p className="text-green-800 font-medium mb-2">Credenciales creadas exitosamente</p>
+                <p className="text-sm text-green-700">
+                  Comparte estos datos con el paciente para que pueda acceder al portal.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-gray-500 text-xs">Email de acceso</Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <code className="flex-1 bg-gray-100 px-3 py-2 rounded text-sm">
+                      {credencialesEmail}
+                    </code>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => copiarAlPortapapeles(credencialesEmail, 'email')}
+                    >
+                      {copiedField === 'email' ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-gray-500 text-xs">Contraseña</Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <code className="flex-1 bg-gray-100 px-3 py-2 rounded text-sm">
+                      {credencialesPassword}
+                    </code>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => copiarAlPortapapeles(credencialesPassword, 'password')}
+                    >
+                      {copiedField === 'password' ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button onClick={() => setIsCredencialesDialogOpen(false)}>
+                  Cerrar
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Tabs principales */}
       <Tabs defaultValue="historia" className="w-full">
