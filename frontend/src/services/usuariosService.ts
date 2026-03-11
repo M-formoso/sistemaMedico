@@ -44,7 +44,7 @@ export const usuariosService = {
   },
 
   obtenerPorId: async (id: number | string): Promise<Usuario> => {
-    const { data } = await api.get(`/usuarios/${id}/`)
+    const { data } = await api.get(`/usuarios/${id}`)
     return data
   },
 
@@ -54,15 +54,15 @@ export const usuariosService = {
   },
 
   actualizar: async (id: number | string, payload: UsuarioUpdate): Promise<Usuario> => {
-    const { data } = await api.put(`/usuarios/${id}/`, payload)
+    const { data } = await api.put(`/usuarios/${id}`, payload)
     return data
   },
 
   resetearPassword: async (id: number | string, password: string): Promise<void> => {
-    await api.put(`/usuarios/${id}/reset-password/`, { password })
+    await api.put(`/usuarios/${id}/reset-password`, { password })
   },
 
   eliminar: async (id: number | string): Promise<void> => {
-    await api.delete(`/usuarios/${id}/`)
+    await api.delete(`/usuarios/${id}`)
   },
 }

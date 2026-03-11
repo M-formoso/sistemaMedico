@@ -15,7 +15,7 @@ export const pacientesService = {
   },
 
   obtenerPorId: async (id: number | string): Promise<Paciente> => {
-    const { data } = await api.get(`/pacientes/${id}/`)
+    const { data } = await api.get(`/pacientes/${id}`)
     return data
   },
 
@@ -25,21 +25,21 @@ export const pacientesService = {
   },
 
   actualizar: async (id: number | string, payload: PacienteUpdate): Promise<Paciente> => {
-    const { data } = await api.put(`/pacientes/${id}/`, payload)
+    const { data } = await api.put(`/pacientes/${id}`, payload)
     return data
   },
 
   eliminar: async (id: number | string): Promise<void> => {
-    await api.delete(`/pacientes/${id}/`)
+    await api.delete(`/pacientes/${id}`)
   },
 
   obtenerHistorial: async (id: number | string) => {
-    const { data } = await api.get(`/pacientes/${id}/historial/`)
+    const { data } = await api.get(`/pacientes/${id}/historial`)
     return data
   },
 
   crearCredenciales: async (id: number | string, email: string, password: string) => {
-    const { data } = await api.post(`/pacientes/${id}/credenciales/`, { email, password })
+    const { data } = await api.post(`/pacientes/${id}/credenciales`, { email, password })
     return data
   },
 }

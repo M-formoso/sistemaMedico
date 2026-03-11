@@ -43,7 +43,7 @@ export default function PortalHistorial() {
   const { data: historial, isLoading } = useQuery({
     queryKey: ['portal', 'mi-historial'],
     queryFn: async () => {
-      const { data } = await api.get('/portal/mi-historial/')
+      const { data } = await api.get('/portal/mi-historial')
       return data as HistorialClinico
     },
   })
