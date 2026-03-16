@@ -5,7 +5,6 @@ import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
   Calendar,
-  DollarSign,
   Package,
   AlertTriangle,
   Users,
@@ -234,28 +233,6 @@ export default function Dashboard() {
             </div>
             <div className="mt-2 text-sm text-green-600">
               +{estadisticasAvanzadas?.pacientes?.nuevos_periodo || 0} en el período
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card
-          className="cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => navigate('/finanzas')}
-        >
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Ingresos del Mes</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {formatearMonto(estadisticas?.ingresos || 0)}
-                </p>
-              </div>
-              <div className="bg-green-100 rounded-full p-3">
-                <TrendingUp className="h-6 w-6 text-green-600" />
-              </div>
-            </div>
-            <div className="mt-2 text-sm text-gray-500">
-              Balance: {formatearMonto(estadisticas?.balance || 0)}
             </div>
           </CardContent>
         </Card>
@@ -535,50 +512,6 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           )}
-
-          {/* Balance del Mes */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
-                Balance del Mes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Ingresos</span>
-                  <span className="font-semibold text-green-600">
-                    {formatearMonto(estadisticas?.ingresos || 0)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Egresos</span>
-                  <span className="font-semibold text-red-600">
-                    {formatearMonto(estadisticas?.egresos || 0)}
-                  </span>
-                </div>
-                <div className="border-t pt-3 flex justify-between items-center">
-                  <span className="font-medium">Balance</span>
-                  <span
-                    className={`text-lg font-bold ${
-                      (estadisticas?.balance || 0) >= 0 ? 'text-primary-600' : 'text-red-600'
-                    }`}
-                  >
-                    {formatearMonto(estadisticas?.balance || 0)}
-                  </span>
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full mt-4"
-                onClick={() => navigate('/finanzas')}
-              >
-                Ver Finanzas
-              </Button>
-            </CardContent>
-          </Card>
 
           {/* Inventario */}
           <Card>
