@@ -4,6 +4,7 @@ from app.api.v1.endpoints import (
     auth,
     pacientes,
     tratamientos,
+    tratamientos_paciente,
     sesiones,
     materiales,
     fotos,
@@ -34,6 +35,7 @@ api_router.include_router(usuarios.router, prefix="/usuarios", tags=["Usuarios"]
 api_router.include_router(pacientes.router, prefix="/pacientes", tags=["Pacientes"])
 api_router.include_router(profesionales.router, prefix="/profesionales", tags=["Profesionales"])
 api_router.include_router(tratamientos.router, prefix="/tratamientos", tags=["Tratamientos"])
+api_router.include_router(tratamientos_paciente.router, prefix="/tratamientos-paciente", tags=["Tratamientos del Paciente"])
 api_router.include_router(sesiones.router, prefix="/sesiones", tags=["Sesiones/Turnos"])
 api_router.include_router(materiales.router, prefix="/materiales", tags=["Materiales/Inventario"])
 api_router.include_router(fotos.router, prefix="/fotos", tags=["Fotos"])

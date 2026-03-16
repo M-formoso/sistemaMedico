@@ -56,6 +56,8 @@ export default function Login() {
       // Redirigir según rol
       if (user.rol === 'paciente') {
         navigate('/portal')
+      } else if (user.rol === 'administradora' || user.rol === 'empleado') {
+        navigate('/dashboard')
       } else {
         navigate('/dashboard')
       }

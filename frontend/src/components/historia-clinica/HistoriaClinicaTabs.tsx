@@ -1,10 +1,11 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { FileText, TestTube, ClipboardList, FileCheck, Image } from 'lucide-react'
+import { FileText, TestTube, ClipboardList, FileCheck, Image, Stethoscope } from 'lucide-react'
 import { EvolucionesTab } from './EvolucionesTab'
 import { EstudiosTab } from './EstudiosTab'
 import { ResultadosTab } from './ResultadosTab'
 import { ConsentimientosTab } from './ConsentimientosTab'
 import { FotosTab } from './FotosTab'
+import { TratamientosTab } from './TratamientosTab'
 
 interface HistoriaClinicaTabsProps {
   pacienteId: number
@@ -12,8 +13,12 @@ interface HistoriaClinicaTabsProps {
 
 export function HistoriaClinicaTabs({ pacienteId }: HistoriaClinicaTabsProps) {
   return (
-    <Tabs defaultValue="evoluciones" className="w-full">
-      <TabsList className="grid w-full grid-cols-5">
+    <Tabs defaultValue="tratamientos" className="w-full">
+      <TabsList className="grid w-full grid-cols-6">
+        <TabsTrigger value="tratamientos" className="flex items-center gap-2">
+          <Stethoscope className="h-4 w-4" />
+          <span className="hidden sm:inline">Tratamientos</span>
+        </TabsTrigger>
         <TabsTrigger value="evoluciones" className="flex items-center gap-2">
           <FileText className="h-4 w-4" />
           <span className="hidden sm:inline">Evoluciones</span>
@@ -37,6 +42,10 @@ export function HistoriaClinicaTabs({ pacienteId }: HistoriaClinicaTabsProps) {
       </TabsList>
 
       <div className="mt-6">
+        <TabsContent value="tratamientos">
+          <TratamientosTab pacienteId={pacienteId} />
+        </TabsContent>
+
         <TabsContent value="evoluciones">
           <EvolucionesTab pacienteId={pacienteId} />
         </TabsContent>

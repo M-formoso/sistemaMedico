@@ -13,6 +13,9 @@ import {
   UserX,
   Shield,
   User,
+  Settings,
+  Check,
+  Briefcase,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -34,7 +37,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { usuariosService, Usuario, UsuarioCreate, UsuarioUpdate } from '@/services/usuariosService'
+import { usuariosService, Usuario, UsuarioCreate, UsuarioUpdate, ModulosDisponibles, RolUsuario } from '@/services/usuariosService'
+import { Checkbox } from '@/components/ui/checkbox'
 import { pacientesService } from '@/services/pacientesService'
 import { formatearFecha } from '@/utils/formatters'
 import { toast } from '@/hooks/useToast'
@@ -59,7 +63,9 @@ export default function UsuariosPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false)
+  const [isPermisosDialogOpen, setIsPermisosDialogOpen] = useState(false)
   const [selectedUsuario, setSelectedUsuario] = useState<Usuario | null>(null)
+  const [selectedPermisos, setSelectedPermisos] = useState<string[]>([])
 
   // Form states
   const [formData, setFormData] = useState<Partial<UsuarioCreate>>({
@@ -86,6 +92,11 @@ export default function UsuariosPage() {
   const { data: pacientes = [] } = useQuery({
     queryKey: ['pacientes-para-usuarios'],
     queryFn: () => pacientesService.listar(),
+  })
+
+  const { data: modulosDisponibles } = useQuery({
+    queryKey: ['modulos-disponibles'],
+    queryFn: () => usuariosService.obtenerModulosDisponibles(),
   })
 
   // Mutations
@@ -192,6 +203,40 @@ export default function UsuariosPage() {
     setIsResetPasswordDialogOpen(true)
   }
 
+  const openPermisosDialog = (usuario: Usuario) => {
+    setSelectedUsuario(usuario)
+    // Obtener permisos según el rol
+    const defaultPermisos = usuario.rol === 'empleado'
+      ? modulosDisponibles?.empleado?.default || []
+      : modulosDisponibles?.paciente?.default || []
+    setSelectedPermisos(usuario.permisos_modulos || defaultPermisos)
+    setIsPermisosDialogOpen(true)
+  }
+
+  const handleTogglePermiso = (modulo: string) => {
+    setSelectedPermisos((prev) =>
+      prev.includes(modulo)
+        ? prev.filter((p) => p !== modulo)
+        : [...prev, modulo]
+    )
+  }
+
+  const handleSavePermisos = () => {
+    if (!selectedUsuario) return
+    actualizarMutation.mutate(
+      {
+        id: selectedUsuario.id,
+        data: { permisos_modulos: selectedPermisos },
+      },
+      {
+        onSuccess: () => {
+          setIsPermisosDialogOpen(false)
+          setSelectedUsuario(null)
+        },
+      }
+    )
+  }
+
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.email || !formData.password || !formData.nombre) {
@@ -209,7 +254,7 @@ export default function UsuariosPage() {
       data: {
         email: formData.email,
         nombre: formData.nombre,
-        rol: formData.rol as 'administradora' | 'paciente',
+        rol: formData.rol as RolUsuario,
         paciente_id: formData.paciente_id,
       },
     })
@@ -230,6 +275,7 @@ export default function UsuariosPage() {
   const stats = {
     total: usuarios.length,
     admins: usuarios.filter((u) => u.rol === 'administradora').length,
+    empleados: usuarios.filter((u) => u.rol === 'empleado').length,
     pacientes: usuarios.filter((u) => u.rol === 'paciente').length,
     activos: usuarios.filter((u) => u.activo).length,
   }
@@ -249,7 +295,7 @@ export default function UsuariosPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -269,6 +315,17 @@ export default function UsuariosPage() {
                 <p className="text-2xl font-bold text-purple-600">{stats.admins}</p>
               </div>
               <Shield className="h-8 w-8 text-purple-400" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Empleados</p>
+                <p className="text-2xl font-bold text-amber-600">{stats.empleados}</p>
+              </div>
+              <Briefcase className="h-8 w-8 text-amber-400" />
             </div>
           </CardContent>
         </Card>
@@ -316,6 +373,7 @@ export default function UsuariosPage() {
               <SelectContent>
                 <SelectItem value="todos">Todos los roles</SelectItem>
                 <SelectItem value="administradora">Administradores</SelectItem>
+                <SelectItem value="empleado">Empleados</SelectItem>
                 <SelectItem value="paciente">Pacientes</SelectItem>
               </SelectContent>
             </Select>
@@ -370,11 +428,15 @@ export default function UsuariosPage() {
                             className={`h-10 w-10 rounded-full flex items-center justify-center ${
                               usuario.rol === 'administradora'
                                 ? 'bg-purple-100'
+                                : usuario.rol === 'empleado'
+                                ? 'bg-amber-100'
                                 : 'bg-blue-100'
                             }`}
                           >
                             {usuario.rol === 'administradora' ? (
                               <Shield className="h-5 w-5 text-purple-600" />
+                            ) : usuario.rol === 'empleado' ? (
+                              <Briefcase className="h-5 w-5 text-amber-600" />
                             ) : (
                               <User className="h-5 w-5 text-blue-600" />
                             )}
@@ -385,9 +447,19 @@ export default function UsuariosPage() {
                       <td className="py-3 px-4 text-gray-600">{usuario.email}</td>
                       <td className="py-3 px-4">
                         <Badge
-                          variant={usuario.rol === 'administradora' ? 'default' : 'secondary'}
+                          variant={
+                            usuario.rol === 'administradora'
+                              ? 'default'
+                              : usuario.rol === 'empleado'
+                              ? 'warning'
+                              : 'secondary'
+                          }
                         >
-                          {usuario.rol === 'administradora' ? 'Admin' : 'Paciente'}
+                          {usuario.rol === 'administradora'
+                            ? 'Admin'
+                            : usuario.rol === 'empleado'
+                            ? 'Empleado'
+                            : 'Paciente'}
                         </Badge>
                       </td>
                       <td className="py-3 px-4 text-gray-600">
@@ -413,6 +485,16 @@ export default function UsuariosPage() {
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex justify-end gap-2">
+                          {(usuario.rol === 'paciente' || usuario.rol === 'empleado') && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openPermisosDialog(usuario)}
+                              title="Configurar permisos"
+                            >
+                              <Settings className="h-4 w-4 text-blue-500" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
@@ -516,8 +598,9 @@ export default function UsuariosPage() {
                 onValueChange={(value) =>
                   setFormData({
                     ...formData,
-                    rol: value as 'administradora' | 'paciente',
-                    paciente_id: value === 'administradora' ? undefined : formData.paciente_id,
+                    rol: value as RolUsuario,
+                    paciente_id: value === 'paciente' ? formData.paciente_id : undefined,
+                    permisos_modulos: undefined,
                   })
                 }
               >
@@ -525,8 +608,9 @@ export default function UsuariosPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="administradora">Administradora</SelectItem>
-                  <SelectItem value="paciente">Paciente</SelectItem>
+                  <SelectItem value="administradora">Administradora (acceso total)</SelectItem>
+                  <SelectItem value="empleado">Empleado (permisos personalizables)</SelectItem>
+                  <SelectItem value="paciente">Paciente (portal)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -551,6 +635,41 @@ export default function UsuariosPage() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+            )}
+
+            {formData.rol === 'empleado' && modulosDisponibles && (
+              <div>
+                <Label>Módulos habilitados</Label>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-2">
+                  <p className="text-sm text-amber-700">
+                    Selecciona los módulos de administración a los que tendrá acceso este empleado.
+                  </p>
+                </div>
+                <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
+                  {Object.entries(modulosDisponibles.empleado.modulos).map(([key, label]) => (
+                    <div
+                      key={key}
+                      className={`flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ${
+                        (formData.permisos_modulos || modulosDisponibles.empleado.default).includes(key)
+                          ? 'bg-amber-50'
+                          : 'hover:bg-gray-50'
+                      }`}
+                      onClick={() => {
+                        const currentPermisos = formData.permisos_modulos || modulosDisponibles.empleado.default
+                        const newPermisos = currentPermisos.includes(key)
+                          ? currentPermisos.filter((p) => p !== key)
+                          : [...currentPermisos, key]
+                        setFormData({ ...formData, permisos_modulos: newPermisos })
+                      }}
+                    >
+                      <Checkbox
+                        checked={(formData.permisos_modulos || modulosDisponibles.empleado.default).includes(key)}
+                      />
+                      <span className="text-sm">{label}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -599,7 +718,8 @@ export default function UsuariosPage() {
                 onValueChange={(value) =>
                   setFormData({
                     ...formData,
-                    rol: value as 'administradora' | 'paciente',
+                    rol: value as RolUsuario,
+                    paciente_id: value === 'paciente' ? formData.paciente_id : undefined,
                   })
                 }
               >
@@ -608,6 +728,7 @@ export default function UsuariosPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="administradora">Administradora</SelectItem>
+                  <SelectItem value="empleado">Empleado</SelectItem>
                   <SelectItem value="paciente">Paciente</SelectItem>
                 </SelectContent>
               </Select>
@@ -699,6 +820,89 @@ export default function UsuariosPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Configurar Permisos */}
+      <Dialog open={isPermisosDialogOpen} onOpenChange={setIsPermisosDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Configurar Permisos</DialogTitle>
+            <DialogDescription>
+              {selectedUsuario?.rol === 'empleado'
+                ? `Selecciona los módulos de administración que puede acceder ${selectedUsuario?.nombre}`
+                : `Selecciona los módulos que puede ver ${selectedUsuario?.nombre} en el portal`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {selectedUsuario?.rol === 'empleado' ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+                <p className="text-sm text-amber-700">
+                  Selecciona los módulos del sistema de administración a los que tendrá acceso este empleado.
+                  La gestión de usuarios está reservada solo para administradores.
+                </p>
+              </div>
+            ) : (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                <p className="text-sm text-blue-700">
+                  Por defecto, los pacientes pueden ver: Turnos, Tratamientos y Consentimientos.
+                  Marca los módulos adicionales que deseas habilitar.
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {modulosDisponibles && selectedUsuario &&
+                Object.entries(
+                  selectedUsuario.rol === 'empleado'
+                    ? modulosDisponibles.empleado.modulos
+                    : modulosDisponibles.paciente.modulos
+                ).map(([key, label]) => (
+                  <div
+                    key={key}
+                    className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${
+                      selectedPermisos.includes(key)
+                        ? selectedUsuario.rol === 'empleado'
+                          ? 'bg-amber-50 border-amber-300'
+                          : 'bg-primary-50 border-primary-300'
+                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                    }`}
+                    onClick={() => handleTogglePermiso(key)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Checkbox
+                        checked={selectedPermisos.includes(key)}
+                        onCheckedChange={() => handleTogglePermiso(key)}
+                      />
+                      <span className="font-medium">{label}</span>
+                    </div>
+                    {selectedPermisos.includes(key) && (
+                      <Check className={`h-4 w-4 ${selectedUsuario.rol === 'empleado' ? 'text-amber-600' : 'text-primary-600'}`} />
+                    )}
+                  </div>
+                ))}
+            </div>
+
+            <div className="pt-2 text-sm text-gray-500">
+              <strong>Módulos seleccionados:</strong> {selectedPermisos.length}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsPermisosDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSavePermisos}
+              disabled={actualizarMutation.isPending}
+            >
+              {actualizarMutation.isPending ? 'Guardando...' : 'Guardar Permisos'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

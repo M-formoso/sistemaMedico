@@ -1,9 +1,15 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel, EmailStr
 
-from app.models.usuario import RolUsuario
+from app.models.usuario import (
+    RolUsuario,
+    MODULOS_PACIENTE,
+    MODULOS_DEFAULT_PACIENTE,
+    MODULOS_ADMIN,
+    MODULOS_DEFAULT_EMPLEADO,
+)
 
 
 class UsuarioBase(BaseModel):
@@ -12,6 +18,7 @@ class UsuarioBase(BaseModel):
     nombre: str
     rol: RolUsuario = RolUsuario.PACIENTE
     paciente_id: Optional[int] = None
+    permisos_modulos: Optional[List[str]] = None
     activo: bool = True
 
 
@@ -22,6 +29,7 @@ class UsuarioCreate(BaseModel):
     nombre: str
     rol: RolUsuario = RolUsuario.PACIENTE
     paciente_id: Optional[int] = None
+    permisos_modulos: Optional[List[str]] = None
 
 
 class UsuarioUpdate(BaseModel):
@@ -30,6 +38,7 @@ class UsuarioUpdate(BaseModel):
     nombre: Optional[str] = None
     rol: Optional[RolUsuario] = None
     paciente_id: Optional[int] = None
+    permisos_modulos: Optional[List[str]] = None
     activo: Optional[bool] = None
 
 
@@ -54,3 +63,21 @@ class UsuarioList(BaseModel):
     """Lista paginada de usuarios."""
     items: list[UsuarioResponse]
     total: int
+
+
+class ModulosDisponiblesPaciente(BaseModel):
+    """Lista de módulos disponibles para asignar a pacientes."""
+    modulos: dict = MODULOS_PACIENTE
+    default: list = list(MODULOS_DEFAULT_PACIENTE)
+
+
+class ModulosDisponiblesEmpleado(BaseModel):
+    """Lista de módulos disponibles para asignar a empleados."""
+    modulos: dict = MODULOS_ADMIN
+    default: list = list(MODULOS_DEFAULT_EMPLEADO)
+
+
+class ModulosDisponibles(BaseModel):
+    """Lista completa de módulos disponibles por tipo de rol."""
+    paciente: ModulosDisponiblesPaciente = ModulosDisponiblesPaciente()
+    empleado: ModulosDisponiblesEmpleado = ModulosDisponiblesEmpleado()

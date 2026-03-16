@@ -21,11 +21,12 @@ import PresupuestosPage from '@/pages/presupuestos'
 import UsuariosPage from '@/pages/usuarios'
 
 // Portal Paciente
-import PortalHome from '@/pages/portal-paciente'
 import PortalTurnos from '@/pages/portal-paciente/turnos'
-import PortalHistorial from '@/pages/portal-paciente/historial'
+import PortalTratamientos from '@/pages/portal-paciente/tratamientos'
+import PortalConsentimientos from '@/pages/portal-paciente/consentimientos'
 import PortalFotos from '@/pages/portal-paciente/fotos'
 import PortalPagos from '@/pages/portal-paciente/pagos'
+import PortalHistorial from '@/pages/portal-paciente/historial'
 
 function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: string }) {
   const { isAuthenticated, user } = useAuthStore()
@@ -193,9 +194,7 @@ function App() {
           path="/portal"
           element={
             <ProtectedRoute requiredRole="paciente">
-              <PacienteLayout>
-                <PortalHome />
-              </PacienteLayout>
+              <Navigate to="/portal/turnos" replace />
             </ProtectedRoute>
           }
         />
@@ -210,11 +209,21 @@ function App() {
           }
         />
         <Route
-          path="/portal/historial"
+          path="/portal/tratamientos"
           element={
             <ProtectedRoute requiredRole="paciente">
               <PacienteLayout>
-                <PortalHistorial />
+                <PortalTratamientos />
+              </PacienteLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/portal/consentimientos"
+          element={
+            <ProtectedRoute requiredRole="paciente">
+              <PacienteLayout>
+                <PortalConsentimientos />
               </PacienteLayout>
             </ProtectedRoute>
           }
@@ -235,6 +244,16 @@ function App() {
             <ProtectedRoute requiredRole="paciente">
               <PacienteLayout>
                 <PortalPagos />
+              </PacienteLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/portal/historial"
+          element={
+            <ProtectedRoute requiredRole="paciente">
+              <PacienteLayout>
+                <PortalHistorial />
               </PacienteLayout>
             </ProtectedRoute>
           }

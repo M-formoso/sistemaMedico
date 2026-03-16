@@ -10,8 +10,26 @@ from app.models.sesion import Sesion
 from app.models.tratamiento import Tratamiento
 from app.models.foto import Foto
 from app.models.pago import Pago
+from app.models.consentimiento import Consentimiento
+from app.models.sesion import SesionMaterial
+from app.models.material import Material
 
 router = APIRouter()
+
+
+@router.get("/mis-permisos")
+def obtener_mis_permisos(
+    current_user = Depends(get_current_paciente)
+):
+    """Obtener los módulos a los que tiene acceso el paciente."""
+    from app.models.usuario import MODULOS_PACIENTE, MODULOS_DEFAULT_PACIENTE
+
+    permisos = current_user.permisos_modulos or list(MODULOS_DEFAULT_PACIENTE)
+
+    return {
+        "modulos_permitidos": permisos,
+        "modulos_nombres": {k: v for k, v in MODULOS_PACIENTE.items() if k in permisos}
+    }
 
 
 @router.get("/mi-historial")
@@ -188,3 +206,65 @@ def obtener_mi_saldo(
         "total_pagado": float(total_pagado),
         "total_tratamientos": float(total_tratamientos),
     }
+
+
+@router.get("/mis-consentimientos")
+def obtener_mis_consentimientos(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_paciente)
+):
+    """Obtener consentimientos del paciente (solo lectura)."""
+    consentimientos = db.query(Consentimiento).filter(
+        Consentimiento.paciente_id == current_user.paciente_id
+    ).order_by(Consentimiento.created_at.desc()).all()
+
+    return [
+        {
+            "id": c.id,
+            "nombre": c.nombre,
+            "tipo": c.tipo.value if hasattr(c.tipo, 'value') else str(c.tipo),
+            "descripcion": c.descripcion,
+            "archivo_url": c.archivo_url,
+            "fecha_firma": c.fecha_firma,
+            "firmado": c.firmado,
+            "fecha_vencimiento": c.fecha_vencimiento,
+            "created_at": c.created_at,
+        }
+        for c in consentimientos
+    ]
+
+
+@router.get("/mis-tratamientos")
+def obtener_mis_tratamientos(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_paciente)
+):
+    """Obtener historial de tratamientos aplicados al paciente con materiales usados."""
+    sesiones = db.query(Sesion).options(
+        joinedload(Sesion.tratamiento),
+        joinedload(Sesion.materiales).joinedload(SesionMaterial.material)
+    ).filter(
+        Sesion.paciente_id == current_user.paciente_id
+    ).order_by(Sesion.fecha.desc()).all()
+
+    return [
+        {
+            "id": s.id,
+            "fecha": s.fecha,
+            "hora_inicio": str(s.hora_inicio) if s.hora_inicio else None,
+            "hora_fin": str(s.hora_fin) if s.hora_fin else None,
+            "tratamiento_nombre": s.tratamiento.nombre if s.tratamiento else "Tratamiento",
+            "zona_corporal": s.tratamiento.zona_corporal if s.tratamiento else None,
+            "estado": s.estado.value if hasattr(s.estado, 'value') else str(s.estado),
+            "notas": s.notas,
+            "materiales_aplicados": [
+                {
+                    "nombre": ms.material.nombre if ms.material else "Material",
+                    "cantidad": float(ms.cantidad) if ms.cantidad else 0,
+                    "unidad": ms.material.unidad_medida if ms.material else None,
+                }
+                for ms in (s.materiales or [])
+            ],
+        }
+        for s in sesiones
+    ]

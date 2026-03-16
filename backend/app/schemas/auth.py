@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel, EmailStr
 
@@ -47,6 +47,7 @@ class UsuarioResponse(UsuarioBase):
     """Respuesta con datos de usuario."""
     id: int
     paciente_id: Optional[int] = None
+    permisos_modulos: Optional[List[str]] = None
     activo: bool
     ultimo_acceso: Optional[datetime] = None
     created_at: datetime

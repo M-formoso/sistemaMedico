@@ -16,6 +16,7 @@ from app.models.resultado import Resultado
 from app.models.consentimiento import Consentimiento, TipoConsentimiento
 from app.models.presupuesto import Presupuesto, EstadoPresupuesto
 from app.models.turno_recurrente import TurnoRecurrente, FrecuenciaTurno, DiaSemana
+from app.models.tratamiento_paciente import TratamientoPaciente, EstadoTratamientoPaciente
 
 __all__ = [
     "Usuario",
@@ -52,4 +53,6 @@ __all__ = [
     "TurnoRecurrente",
     "FrecuenciaTurno",
     "DiaSemana",
+    "TratamientoPaciente",
+    "EstadoTratamientoPaciente",
 ]

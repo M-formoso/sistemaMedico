@@ -5,17 +5,42 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.api.deps import get_current_admin
-from app.models.usuario import Usuario, RolUsuario
+from app.models.usuario import (
+    Usuario,
+    RolUsuario,
+    MODULOS_PACIENTE,
+    MODULOS_DEFAULT_PACIENTE,
+    MODULOS_ADMIN,
+    MODULOS_DEFAULT_EMPLEADO,
+)
 from app.models.paciente import Paciente
 from app.schemas.usuario import (
     UsuarioCreate,
     UsuarioUpdate,
     UsuarioResponse,
     UsuarioResetPassword,
+    ModulosDisponibles,
 )
 from app.core.security import hashear_password
 
 router = APIRouter()
+
+
+@router.get("/modulos-disponibles", response_model=ModulosDisponibles)
+def obtener_modulos_disponibles(
+    current_user = Depends(get_current_admin)
+):
+    """Obtener lista de módulos disponibles para asignar a pacientes y empleados."""
+    return {
+        "paciente": {
+            "modulos": MODULOS_PACIENTE,
+            "default": list(MODULOS_DEFAULT_PACIENTE)
+        },
+        "empleado": {
+            "modulos": MODULOS_ADMIN,
+            "default": list(MODULOS_DEFAULT_EMPLEADO)
+        }
+    }
 
 
 @router.get("/", response_model=List[UsuarioResponse])
@@ -49,12 +74,21 @@ def listar_usuarios(
     # Agregar nombre del paciente si corresponde
     result = []
     for u in usuarios:
+        # Determinar permisos por defecto según el rol
+        if u.rol == RolUsuario.ADMINISTRADORA:
+            permisos = list(MODULOS_ADMIN.keys())
+        elif u.rol == RolUsuario.EMPLEADO:
+            permisos = u.permisos_modulos or list(MODULOS_DEFAULT_EMPLEADO)
+        else:  # PACIENTE
+            permisos = u.permisos_modulos or list(MODULOS_DEFAULT_PACIENTE)
+
         usuario_dict = {
             "id": u.id,
             "email": u.email,
             "nombre": u.nombre,
             "rol": u.rol,
             "paciente_id": u.paciente_id,
+            "permisos_modulos": permisos,
             "activo": u.activo,
             "ultimo_acceso": u.ultimo_acceso,
             "created_at": u.created_at,
@@ -114,19 +148,31 @@ def crear_usuario(
                 detail="El paciente ya tiene un usuario asociado"
             )
 
+    # Determinar permisos por defecto según el rol
+    if data.permisos_modulos:
+        permisos = data.permisos_modulos
+    elif data.rol == RolUsuario.ADMINISTRADORA:
+        permisos = list(MODULOS_ADMIN.keys())
+    elif data.rol == RolUsuario.EMPLEADO:
+        permisos = list(MODULOS_DEFAULT_EMPLEADO)
+    else:  # PACIENTE
+        permisos = list(MODULOS_DEFAULT_PACIENTE)
+
     usuario = Usuario(
         email=data.email,
         password_hash=hashear_password(data.password),
         nombre=data.nombre,
         rol=data.rol,
         paciente_id=data.paciente_id,
+        permisos_modulos=permisos,
     )
     db.add(usuario)
     db.commit()
     db.refresh(usuario)
 
     return {
-        **usuario.__dict__,
+        **{k: v for k, v in usuario.__dict__.items() if not k.startswith('_')},
+        "permisos_modulos": usuario.permisos_modulos,
         "paciente_nombre": paciente_nombre,
     }
 
@@ -152,8 +198,17 @@ def obtener_usuario(
         if paciente:
             paciente_nombre = f"{paciente.nombre} {paciente.apellido}"
 
+    # Determinar permisos según el rol
+    if usuario.rol == RolUsuario.ADMINISTRADORA:
+        permisos = list(MODULOS_ADMIN.keys())
+    elif usuario.rol == RolUsuario.EMPLEADO:
+        permisos = usuario.permisos_modulos or list(MODULOS_DEFAULT_EMPLEADO)
+    else:
+        permisos = usuario.permisos_modulos or list(MODULOS_DEFAULT_PACIENTE)
+
     return {
-        **usuario.__dict__,
+        **{k: v for k, v in usuario.__dict__.items() if not k.startswith('_')},
+        "permisos_modulos": permisos,
         "paciente_nombre": paciente_nombre,
     }
 
@@ -203,8 +258,17 @@ def actualizar_usuario(
         if paciente:
             paciente_nombre = f"{paciente.nombre} {paciente.apellido}"
 
+    # Determinar permisos según el rol
+    if usuario.rol == RolUsuario.ADMINISTRADORA:
+        permisos = list(MODULOS_ADMIN.keys())
+    elif usuario.rol == RolUsuario.EMPLEADO:
+        permisos = usuario.permisos_modulos or list(MODULOS_DEFAULT_EMPLEADO)
+    else:
+        permisos = usuario.permisos_modulos or list(MODULOS_DEFAULT_PACIENTE)
+
     return {
-        **usuario.__dict__,
+        **{k: v for k, v in usuario.__dict__.items() if not k.startswith('_')},
+        "permisos_modulos": permisos,
         "paciente_nombre": paciente_nombre,
     }
 

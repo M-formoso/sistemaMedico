@@ -29,6 +29,7 @@ class Tratamiento(Base):
 
     # Relaciones
     sesiones = relationship("Sesion", back_populates="tratamiento")
+    pacientes_asignados = relationship("TratamientoPaciente", back_populates="tratamiento")
 
     def __repr__(self):
         return f"<Tratamiento {self.nombre}>"

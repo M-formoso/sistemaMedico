@@ -54,6 +54,7 @@ def get_current_user(
 def get_current_admin(current_user = Depends(get_current_user)):
     """
     Verifica que el usuario actual sea administradora.
+    Usado para acciones exclusivas como gestión de usuarios.
 
     Raises:
         HTTPException 403: Si el usuario no es administradora
@@ -64,6 +65,42 @@ def get_current_admin(current_user = Depends(get_current_user)):
             detail="No tiene permisos para realizar esta acción"
         )
     return current_user
+
+
+def get_current_staff(current_user = Depends(get_current_user)):
+    """
+    Verifica que el usuario actual sea administradora o empleado.
+    Usado para acceso general al panel de administración.
+
+    Raises:
+        HTTPException 403: Si el usuario no es staff (admin o empleado)
+    """
+    if current_user.rol not in ["administradora", "empleado"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acceso solo para personal autorizado"
+        )
+    return current_user
+
+
+def require_modulo(modulo: str):
+    """
+    Factory para crear una dependencia que verifica acceso a un módulo específico.
+
+    Args:
+        modulo: Nombre del módulo a verificar (pacientes, tratamientos, sesiones, etc.)
+
+    Returns:
+        Dependencia de FastAPI que verifica el permiso
+    """
+    def verificar_permiso(current_user = Depends(get_current_staff)):
+        if not current_user.tiene_permiso(modulo):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"No tiene permisos para acceder al módulo '{modulo}'"
+            )
+        return current_user
+    return verificar_permiso
 
 
 def get_current_paciente(current_user = Depends(get_current_user)):

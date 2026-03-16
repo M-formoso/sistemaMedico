@@ -59,6 +59,7 @@ class Paciente(Base):
     consentimientos = relationship("Consentimiento", back_populates="paciente")
     presupuestos = relationship("Presupuesto", back_populates="paciente", order_by="desc(Presupuesto.fecha)")
     turnos_recurrentes = relationship("TurnoRecurrente", back_populates="paciente")
+    tratamientos_asignados = relationship("TratamientoPaciente", back_populates="paciente", order_by="desc(TratamientoPaciente.created_at)")
 
     def __repr__(self):
         return f"<Paciente {self.nombre} {self.apellido}>"

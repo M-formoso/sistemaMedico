@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -24,18 +24,19 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Agenda/Turnos', href: '/sesiones', icon: Calendar },
-  { name: 'Pacientes', href: '/pacientes', icon: Users },
-  { name: 'Profesionales', href: '/profesionales', icon: UserCog },
-  { name: 'Tratamientos', href: '/tratamientos', icon: Scissors },
-  { name: 'Presupuestos', href: '/presupuestos', icon: FileText },
-  { name: 'Materiales', href: '/materiales', icon: Package },
-  { name: 'Finanzas', href: '/finanzas', icon: DollarSign },
-  { name: 'Reportes', href: '/reportes', icon: BarChart3 },
-  { name: 'Usuarios', href: '/usuarios', icon: KeyRound },
-  { name: 'Configuración', href: '/configuracion', icon: Settings },
+// Mapeo de rutas a módulos de permisos
+const allNavigation = [
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, modulo: 'dashboard' },
+  { name: 'Agenda/Turnos', href: '/sesiones', icon: Calendar, modulo: 'agenda' },
+  { name: 'Pacientes', href: '/pacientes', icon: Users, modulo: 'pacientes' },
+  { name: 'Profesionales', href: '/profesionales', icon: UserCog, modulo: 'pacientes' }, // Mismo módulo que pacientes
+  { name: 'Tratamientos', href: '/tratamientos', icon: Scissors, modulo: 'tratamientos' },
+  { name: 'Presupuestos', href: '/presupuestos', icon: FileText, modulo: 'finanzas' },
+  { name: 'Materiales', href: '/materiales', icon: Package, modulo: 'materiales' },
+  { name: 'Finanzas', href: '/finanzas', icon: DollarSign, modulo: 'finanzas' },
+  { name: 'Reportes', href: '/reportes', icon: BarChart3, modulo: 'reportes' },
+  { name: 'Usuarios', href: '/usuarios', icon: KeyRound, modulo: null }, // Solo admins
+  { name: 'Configuración', href: '/configuracion', icon: Settings, modulo: null }, // Solo admins
 ]
 
 interface AdminLayoutProps {
@@ -53,6 +54,29 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     clearAuth()
     navigate('/login')
   }
+
+  // Filtrar navegación según permisos del usuario
+  const navigation = useMemo(() => {
+    if (!user) return []
+
+    // Administradora tiene acceso total
+    if (user.rol === 'administradora') {
+      return allNavigation
+    }
+
+    // Empleado: filtrar según permisos_modulos
+    if (user.rol === 'empleado') {
+      const permisos = user.permisos_modulos || []
+      return allNavigation.filter((item) => {
+        // Items sin módulo definido (Usuarios, Configuración) solo para admins
+        if (item.modulo === null) return false
+        // Verificar si tiene permiso para el módulo
+        return permisos.includes(item.modulo)
+      })
+    }
+
+    return []
+  }, [user])
 
   const currentPage = navigation.find((item) => location.pathname.startsWith(item.href))
 
@@ -149,14 +173,21 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             {!sidebarCollapsed ? (
               <>
                 <div className="flex items-center gap-3 mb-3 p-2 rounded-lg bg-white shadow-sm">
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-md">
+                  <div className={cn(
+                    "h-10 w-10 rounded-full flex items-center justify-center shadow-md",
+                    user?.rol === 'administradora'
+                      ? "bg-gradient-to-br from-primary-400 to-primary-600"
+                      : "bg-gradient-to-br from-amber-400 to-amber-600"
+                  )}>
                     <span className="text-white font-semibold">
                       {user?.nombre?.charAt(0) || 'A'}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-900 truncate">{user?.nombre}</p>
-                    <p className="text-xs text-gray-500">Administradora</p>
+                    <p className="text-xs text-gray-500">
+                      {user?.rol === 'administradora' ? 'Administradora' : 'Empleado'}
+                    </p>
                   </div>
                 </div>
                 <button

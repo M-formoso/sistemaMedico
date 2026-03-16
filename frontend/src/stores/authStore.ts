@@ -5,8 +5,9 @@ interface User {
   id: string
   email: string
   nombre: string
-  rol: 'administradora' | 'paciente'
+  rol: 'administradora' | 'empleado' | 'paciente'
   paciente_id?: string
+  permisos_modulos?: string[]
 }
 
 interface AuthState {

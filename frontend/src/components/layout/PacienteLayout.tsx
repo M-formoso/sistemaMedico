@@ -1,27 +1,32 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   Calendar,
-  Image,
-  CreditCard,
-  FileText,
+  FileCheck,
   LogOut,
-  Home,
-  Bell,
   Menu,
   X,
+  Stethoscope,
+  Image,
+  CreditCard,
+  ClipboardList,
+  LucideIcon,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/authStore'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import api from '@/lib/axios'
 
-const navigation = [
-  { name: 'Inicio', href: '/portal', icon: Home, exact: true },
-  { name: 'Mis Turnos', href: '/portal/turnos', icon: Calendar },
-  { name: 'Mi Historial', href: '/portal/historial', icon: FileText },
-  { name: 'Mis Fotos', href: '/portal/fotos', icon: Image },
-  { name: 'Mis Pagos', href: '/portal/pagos', icon: CreditCard },
-]
+// Definición de todos los módulos posibles
+const allModules: Record<string, { name: string; href: string; icon: LucideIcon; exact?: boolean }> = {
+  turnos: { name: 'Mis Turnos', href: '/portal/turnos', icon: Calendar, exact: true },
+  tratamientos: { name: 'Mis Tratamientos', href: '/portal/tratamientos', icon: Stethoscope },
+  consentimientos: { name: 'Mis Consentimientos', href: '/portal/consentimientos', icon: FileCheck },
+  fotos: { name: 'Mis Fotos', href: '/portal/fotos', icon: Image },
+  pagos: { name: 'Mis Pagos', href: '/portal/pagos', icon: CreditCard },
+  historial: { name: 'Mi Historial', href: '/portal/historial', icon: ClipboardList },
+}
 
 interface PacienteLayoutProps {
   children: React.ReactNode
@@ -32,6 +37,23 @@ export default function PacienteLayout({ children }: PacienteLayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, clearAuth } = useAuthStore()
+
+  // Obtener permisos del usuario
+  const { data: permisosData } = useQuery({
+    queryKey: ['portal', 'mis-permisos'],
+    queryFn: async () => {
+      const { data } = await api.get('/portal/mis-permisos')
+      return data as { modulos_permitidos: string[]; modulos_nombres: Record<string, string> }
+    },
+  })
+
+  // Filtrar navegación según permisos
+  const navigation = useMemo(() => {
+    const modulosPermitidos = permisosData?.modulos_permitidos || ['turnos', 'tratamientos', 'consentimientos']
+    return modulosPermitidos
+      .filter((key) => allModules[key])
+      .map((key) => allModules[key])
+  }, [permisosData])
 
   const handleLogout = () => {
     clearAuth()
