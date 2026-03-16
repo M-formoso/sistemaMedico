@@ -31,7 +31,7 @@ Sistema de Gestión Integral para Consultorio de Medicina Estética que administ
 ### Frontend
 - React 18 + TypeScript 5+ + Vite
 - Tailwind CSS + shadcn/ui
-- **Paleta:** Rosa/fucsia médico (#C2185B, #E91E63, #FCE4EC)
+- **Paleta:** Violeta lavanda (#7C6AA8, #8B7BB5, #F5F3FA)
 - Zustand (state) + TanStack Query (data fetching)
 - React Hook Form + Zod (formularios)
 - TanStack Table (tablas)
