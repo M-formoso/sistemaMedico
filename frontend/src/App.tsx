@@ -28,15 +28,23 @@ import PortalFotos from '@/pages/portal-paciente/fotos'
 import PortalPagos from '@/pages/portal-paciente/pagos'
 import PortalHistorial from '@/pages/portal-paciente/historial'
 
-function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: string }) {
+function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: 'admin' | 'paciente' }) {
   const { isAuthenticated, user } = useAuthStore()
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
   }
 
-  if (requiredRole && user?.rol !== requiredRole) {
-    return <Navigate to="/" replace />
+  // 'admin' incluye administradora y empleado
+  if (requiredRole === 'admin') {
+    if (user?.rol !== 'administradora' && user?.rol !== 'empleado') {
+      return <Navigate to="/portal" replace />
+    }
+  }
+
+  // 'paciente' solo para pacientes
+  if (requiredRole === 'paciente' && user?.rol !== 'paciente') {
+    return <Navigate to="/dashboard" replace />
   }
 
   return <>{children}</>
@@ -67,11 +75,11 @@ function App() {
           }
         />
 
-        {/* Admin Routes */}
+        {/* Admin Routes (accesibles por administradora y empleado) */}
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute requiredRole="administradora">
+            <ProtectedRoute requiredRole="admin">
               <AdminLayout>
                 <Dashboard />
               </AdminLayout>
@@ -81,7 +89,7 @@ function App() {
         <Route
           path="/pacientes"
           element={
-            <ProtectedRoute requiredRole="administradora">
+            <ProtectedRoute requiredRole="admin">
               <AdminLayout>
                 <PacientesPage />
               </AdminLayout>
@@ -91,7 +99,7 @@ function App() {
         <Route
           path="/pacientes/:id"
           element={
-            <ProtectedRoute requiredRole="administradora">
+            <ProtectedRoute requiredRole="admin">
               <AdminLayout>
                 <PacienteDetailPage />
               </AdminLayout>
@@ -101,7 +109,7 @@ function App() {
         <Route
           path="/tratamientos/*"
           element={
-            <ProtectedRoute requiredRole="administradora">
+            <ProtectedRoute requiredRole="admin">
               <AdminLayout>
                 <TratamientosPage />
               </AdminLayout>
@@ -111,7 +119,7 @@ function App() {
         <Route
           path="/sesiones/*"
           element={
-            <ProtectedRoute requiredRole="administradora">
+            <ProtectedRoute requiredRole="admin">
               <AdminLayout>
                 <SesionesPage />
               </AdminLayout>
@@ -121,7 +129,7 @@ function App() {
         <Route
           path="/materiales/*"
           element={
-            <ProtectedRoute requiredRole="administradora">
+            <ProtectedRoute requiredRole="admin">
               <AdminLayout>
                 <MaterialesPage />
               </AdminLayout>
@@ -131,7 +139,7 @@ function App() {
         <Route
           path="/finanzas/*"
           element={
-            <ProtectedRoute requiredRole="administradora">
+            <ProtectedRoute requiredRole="admin">
               <AdminLayout>
                 <FinanzasPage />
               </AdminLayout>
@@ -141,7 +149,7 @@ function App() {
         <Route
           path="/reportes/*"
           element={
-            <ProtectedRoute requiredRole="administradora">
+            <ProtectedRoute requiredRole="admin">
               <AdminLayout>
                 <ReportesPage />
               </AdminLayout>
@@ -151,7 +159,7 @@ function App() {
         <Route
           path="/profesionales/*"
           element={
-            <ProtectedRoute requiredRole="administradora">
+            <ProtectedRoute requiredRole="admin">
               <AdminLayout>
                 <ProfesionalesPage />
               </AdminLayout>
@@ -161,7 +169,7 @@ function App() {
         <Route
           path="/configuracion/*"
           element={
-            <ProtectedRoute requiredRole="administradora">
+            <ProtectedRoute requiredRole="admin">
               <AdminLayout>
                 <ConfiguracionPage />
               </AdminLayout>
@@ -171,7 +179,7 @@ function App() {
         <Route
           path="/presupuestos/*"
           element={
-            <ProtectedRoute requiredRole="administradora">
+            <ProtectedRoute requiredRole="admin">
               <AdminLayout>
                 <PresupuestosPage />
               </AdminLayout>
@@ -181,7 +189,7 @@ function App() {
         <Route
           path="/usuarios/*"
           element={
-            <ProtectedRoute requiredRole="administradora">
+            <ProtectedRoute requiredRole="admin">
               <AdminLayout>
                 <UsuariosPage />
               </AdminLayout>
