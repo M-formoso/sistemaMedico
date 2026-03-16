@@ -143,11 +143,10 @@ def obtener_mis_fotos(
         {
             "id": f.id,
             "url": f.url,
-            "tipo": f.tipo,
+            "tipo": f.tipo.value if hasattr(f.tipo, 'value') else str(f.tipo),
             "zona": f.zona,
             "fecha": f.fecha,
             "tratamiento_nombre": f.sesion.tratamiento.nombre if f.sesion and f.sesion.tratamiento else None,
-            "notas": f.notas,
         }
         for f in fotos
     ]
