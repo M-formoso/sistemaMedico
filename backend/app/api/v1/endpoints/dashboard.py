@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, case
 
 from app.db.session import get_db
-from app.api.deps import get_current_admin
+from app.api.deps import require_modulo
 from app.models.sesion import Sesion, EstadoSesion
 from app.models.pago import Pago
 from app.models.material import Material
@@ -21,7 +21,7 @@ router = APIRouter()
 @router.get("/resumen-dia")
 def obtener_resumen_dia(
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('dashboard'))
 ):
     """Resumen operativo del día."""
     hoy = date.today()
@@ -63,7 +63,7 @@ def obtener_resumen_dia(
 @router.get("/alertas")
 def obtener_alertas(
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('dashboard'))
 ):
     """Alertas activas del sistema."""
     # Materiales con stock bajo
@@ -83,7 +83,7 @@ def obtener_alertas(
 @router.get("/estadisticas-mes")
 def obtener_estadisticas_mes(
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('dashboard'))
 ):
     """Estadísticas del mes actual."""
     hoy = date.today()
@@ -135,7 +135,7 @@ def obtener_estadisticas_avanzadas(
     fecha_fin: Optional[str] = Query(None),
     profesional_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('dashboard'))
 ):
     """Estadísticas avanzadas con filtros."""
     hoy = date.today()
@@ -243,7 +243,7 @@ def obtener_estadisticas_avanzadas(
 @router.get("/lista-espera-count")
 def obtener_lista_espera_count(
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('dashboard'))
 ):
     """Cantidad de pacientes en lista de espera."""
     from app.models.configuracion import ListaEspera

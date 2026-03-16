@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from app.db.session import get_db
-from app.api.deps import get_current_admin
+from app.api.deps import require_modulo
 from app.models.foto import Foto, TipoFoto
 from app.core.config import settings
 
@@ -54,7 +54,7 @@ async def subir_foto(
     descripcion: Optional[str] = Form(None),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('fotos'))
 ):
     """
     Subir foto a Cloudinary.
@@ -130,7 +130,7 @@ def obtener_fotos_paciente(
     tipo: Optional[str] = None,
     tratamiento_id: Optional[int] = None,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('fotos'))
 ):
     """Obtener fotos de un paciente."""
     query = db.query(Foto).filter(Foto.paciente_id == paciente_id)
@@ -164,7 +164,7 @@ def obtener_fotos_paciente(
 def eliminar_foto(
     foto_id: int,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('fotos'))
 ):
     """Eliminar foto."""
     foto = db.query(Foto).filter(Foto.id == foto_id).first()
@@ -187,7 +187,7 @@ def cambiar_visibilidad(
     foto_id: int,
     visible: bool,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('fotos'))
 ):
     """Cambiar visibilidad de foto para el paciente."""
     foto = db.query(Foto).filter(Foto.id == foto_id).first()

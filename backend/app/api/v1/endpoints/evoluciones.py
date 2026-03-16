@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from app.db.session import get_db
-from app.api.deps import get_current_admin
+from app.api.deps import require_modulo
 from app.models.evolucion import Evolucion
 from app.models.paciente import Paciente
 
@@ -48,7 +48,7 @@ def listar_evoluciones_paciente(
     skip: int = 0,
     limit: int = 50,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('historia_clinica'))
 ):
     """Listar evoluciones de un paciente."""
     evoluciones = db.query(Evolucion).filter(
@@ -62,7 +62,7 @@ def listar_evoluciones_paciente(
 def crear_evolucion(
     data: EvolucionCreate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('historia_clinica'))
 ):
     """Crear nueva evolución para un paciente."""
     # Verificar que el paciente existe
@@ -85,7 +85,7 @@ def crear_evolucion(
 def obtener_evolucion(
     evolucion_id: int,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('historia_clinica'))
 ):
     """Obtener una evolución por ID."""
     evolucion = db.query(Evolucion).filter(Evolucion.id == evolucion_id).first()
@@ -101,7 +101,7 @@ def actualizar_evolucion(
     evolucion_id: int,
     data: EvolucionUpdate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('historia_clinica'))
 ):
     """Actualizar una evolución."""
     evolucion = db.query(Evolucion).filter(Evolucion.id == evolucion_id).first()
@@ -123,7 +123,7 @@ def actualizar_evolucion(
 def eliminar_evolucion(
     evolucion_id: int,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('historia_clinica'))
 ):
     """Eliminar una evolución."""
     evolucion = db.query(Evolucion).filter(Evolucion.id == evolucion_id).first()

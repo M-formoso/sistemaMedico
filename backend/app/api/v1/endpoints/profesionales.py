@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.api.deps import get_current_admin
+from app.api.deps import require_modulo
 from app.models.profesional import Profesional
 from app.schemas.profesional import (
     ProfesionalCreate,
@@ -24,7 +24,7 @@ def listar_profesionales(
     especialidad: Optional[str] = None,
     buscar: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin),
+    current_user=Depends(require_modulo('pacientes')),
 ):
     """Lista todos los profesionales con filtros opcionales."""
     query = db.query(Profesional)
@@ -51,7 +51,7 @@ def listar_profesionales(
 @router.get("/activos", response_model=List[ProfesionalBrief])
 def listar_profesionales_activos(
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin),
+    current_user=Depends(require_modulo('pacientes')),
 ):
     """Lista profesionales activos (para selects)."""
     profesionales = (
@@ -66,7 +66,7 @@ def listar_profesionales_activos(
 @router.get("/especialidades", response_model=List[str])
 def listar_especialidades(
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin),
+    current_user=Depends(require_modulo('pacientes')),
 ):
     """Lista todas las especialidades únicas."""
     especialidades = (
@@ -82,7 +82,7 @@ def listar_especialidades(
 def crear_profesional(
     profesional_in: ProfesionalCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin),
+    current_user=Depends(require_modulo('pacientes')),
 ):
     """Crea un nuevo profesional."""
     # Verificar matrícula única si se proporciona
@@ -110,7 +110,7 @@ def crear_profesional(
 def obtener_profesional(
     profesional_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin),
+    current_user=Depends(require_modulo('pacientes')),
 ):
     """Obtiene un profesional por ID."""
     profesional = db.query(Profesional).filter(Profesional.id == profesional_id).first()
@@ -126,7 +126,7 @@ def actualizar_profesional(
     profesional_id: int,
     profesional_in: ProfesionalUpdate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin),
+    current_user=Depends(require_modulo('pacientes')),
 ):
     """Actualiza un profesional existente."""
     profesional = db.query(Profesional).filter(Profesional.id == profesional_id).first()
@@ -161,7 +161,7 @@ def actualizar_profesional(
 def eliminar_profesional(
     profesional_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin),
+    current_user=Depends(require_modulo('pacientes')),
 ):
     """Elimina (desactiva) un profesional."""
     profesional = db.query(Profesional).filter(Profesional.id == profesional_id).first()

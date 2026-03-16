@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.api.deps import get_current_admin
+from app.api.deps import require_modulo
 from app.models.sesion import Sesion, SesionMaterial, EstadoSesion
 from app.models.material import Material
 from app.models.movimiento_stock import MovimientoStock, TipoMovimiento
@@ -30,7 +30,7 @@ def listar_sesiones(
     fecha_inicio: Optional[date] = None,
     fecha_fin: Optional[date] = None,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('agenda'))
 ):
     """Listar sesiones con filtros opcionales."""
     query = db.query(Sesion)
@@ -60,7 +60,7 @@ def listar_sesiones(
 def crear_sesion(
     data: SesionCreate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('agenda'))
 ):
     """
     Crear nueva sesión clínica.
@@ -127,7 +127,7 @@ def crear_sesion(
 @router.get("/agenda/hoy", response_model=List[SesionResponse])
 def obtener_agenda_hoy(
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('agenda'))
 ):
     """Obtener sesiones programadas para hoy."""
     hoy = date.today()
@@ -142,7 +142,7 @@ def obtener_agenda_hoy(
 def obtener_sesion(
     sesion_id: int,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('agenda'))
 ):
     """Obtener sesión por ID."""
     sesion = db.query(Sesion).filter(Sesion.id == sesion_id).first()
@@ -161,7 +161,7 @@ def actualizar_sesion(
     sesion_id: int,
     data: SesionUpdate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('agenda'))
 ):
     """Actualizar datos de la sesión."""
     sesion = db.query(Sesion).filter(Sesion.id == sesion_id).first()
@@ -185,7 +185,7 @@ def actualizar_sesion(
 def eliminar_sesion(
     sesion_id: int,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('agenda'))
 ):
     """Eliminar sesión."""
     sesion = db.query(Sesion).filter(Sesion.id == sesion_id).first()
@@ -212,7 +212,7 @@ def cambiar_estado_sesion(
     sesion_id: int,
     data: CambiarEstado,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('agenda'))
 ):
     """Cambiar el estado de una sesión."""
     sesion = db.query(Sesion).filter(Sesion.id == sesion_id).first()
@@ -234,7 +234,7 @@ def asignar_materiales(
     sesion_id: int,
     materiales: List[AsignarMaterial],
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('agenda'))
 ):
     """
     Asignar materiales adicionales a una sesión existente.

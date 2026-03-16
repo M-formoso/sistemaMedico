@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.api.deps import get_current_admin
+from app.api.deps import get_current_admin, require_modulo
 from app.models.paciente import Paciente, EstadoPaciente
 from app.models.usuario import Usuario, RolUsuario
 from app.schemas.paciente import (
@@ -25,9 +25,9 @@ def listar_pacientes(
     estado: Optional[EstadoPaciente] = None,
     buscar: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('pacientes'))
 ):
-    """Listar todos los pacientes (solo administradora)."""
+    """Listar todos los pacientes (staff con permiso de pacientes)."""
     query = db.query(Paciente).filter(Paciente.activo == True)
 
     if estado:
@@ -49,7 +49,7 @@ def listar_pacientes(
 def crear_paciente(
     data: PacienteCreate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('pacientes'))
 ):
     """Crear nuevo paciente."""
     # Verificar DNI único si se proporciona
@@ -72,7 +72,7 @@ def crear_paciente(
 def obtener_paciente(
     paciente_id: int,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('pacientes'))
 ):
     """Obtener paciente por ID."""
     paciente = db.query(Paciente).filter(
@@ -94,7 +94,7 @@ def actualizar_paciente(
     paciente_id: int,
     data: PacienteUpdate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('pacientes'))
 ):
     """Actualizar datos del paciente."""
     paciente = db.query(Paciente).filter(
@@ -121,7 +121,7 @@ def actualizar_paciente(
 def eliminar_paciente(
     paciente_id: int,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('pacientes'))
 ):
     """Eliminar paciente (soft delete)."""
     paciente = db.query(Paciente).filter(
@@ -144,7 +144,7 @@ def crear_credenciales_paciente(
     paciente_id: int,
     data: CrearCredencialesPaciente,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('pacientes'))
 ):
     """Crear credenciales de acceso al portal para un paciente."""
     paciente = db.query(Paciente).filter(
@@ -194,7 +194,7 @@ def crear_credenciales_paciente(
 def obtener_historial_paciente(
     paciente_id: int,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('pacientes'))
 ):
     """Obtener historial clínico completo del paciente."""
     paciente = db.query(Paciente).filter(

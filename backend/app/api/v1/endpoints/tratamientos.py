@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.api.deps import get_current_admin, get_current_user
+from app.api.deps import get_current_admin, get_current_user, require_modulo
 from app.models.tratamiento import Tratamiento
 from app.schemas.tratamiento import TratamientoCreate, TratamientoUpdate, TratamientoResponse
 
@@ -30,7 +30,7 @@ def listar_tratamientos(
 def crear_tratamiento(
     data: TratamientoCreate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('tratamientos'))
 ):
     """Crear nuevo tratamiento (solo administradora)."""
     tratamiento = Tratamiento(**data.model_dump())
@@ -65,7 +65,7 @@ def actualizar_tratamiento(
     tratamiento_id: int,
     data: TratamientoUpdate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('tratamientos'))
 ):
     """Actualizar tratamiento (solo administradora)."""
     tratamiento = db.query(Tratamiento).filter(
@@ -91,7 +91,7 @@ def actualizar_tratamiento(
 def eliminar_tratamiento(
     tratamiento_id: int,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('tratamientos'))
 ):
     """Eliminar tratamiento (soft delete, solo administradora)."""
     tratamiento = db.query(Tratamiento).filter(

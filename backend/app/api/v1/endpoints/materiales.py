@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.api.deps import get_current_admin
+from app.api.deps import require_modulo
 from app.models.material import Material
 from app.models.movimiento_stock import MovimientoStock, TipoMovimiento
 from app.schemas.material import (
@@ -24,7 +24,7 @@ def listar_materiales(
     activo: Optional[bool] = True,
     buscar: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('materiales'))
 ):
     """Listar materiales."""
     query = db.query(Material)
@@ -46,7 +46,7 @@ def listar_materiales(
 def crear_material(
     data: MaterialCreate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('materiales'))
 ):
     """Crear nuevo material."""
     if data.codigo:
@@ -64,7 +64,7 @@ def crear_material(
 @router.get("/stock-bajo", response_model=List[MaterialResponse])
 def listar_stock_bajo(
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('materiales'))
 ):
     """Listar materiales con stock bajo el mínimo."""
     return db.query(Material).filter(
@@ -76,7 +76,7 @@ def listar_stock_bajo(
 @router.get("/valor-total", response_model=ValorInventario)
 def obtener_valor_inventario(
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('materiales'))
 ):
     """Obtener valor total del inventario."""
     materiales = db.query(Material).filter(Material.activo == True).all()
@@ -95,7 +95,7 @@ def obtener_valor_inventario(
 def obtener_material(
     material_id: int,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('materiales'))
 ):
     """Obtener material por ID."""
     material = db.query(Material).filter(Material.id == material_id, Material.activo == True).first()
@@ -109,7 +109,7 @@ def actualizar_material(
     material_id: int,
     data: MaterialUpdate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('materiales'))
 ):
     """Actualizar material."""
     material = db.query(Material).filter(Material.id == material_id, Material.activo == True).first()
@@ -128,7 +128,7 @@ def actualizar_material(
 def eliminar_material(
     material_id: int,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('materiales'))
 ):
     """Eliminar material (soft delete)."""
     material = db.query(Material).filter(Material.id == material_id, Material.activo == True).first()
@@ -142,7 +142,7 @@ def eliminar_material(
 def registrar_movimiento(
     data: MovimientoStockCreate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('materiales'))
 ):
     """Registrar movimiento de stock (entrada, salida o ajuste)."""
     material = db.query(Material).filter(Material.id == data.material_id, Material.activo == True).first()
@@ -193,7 +193,7 @@ def obtener_movimientos(
     skip: int = 0,
     limit: int = 50,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_admin)
+    current_user = Depends(require_modulo('materiales'))
 ):
     """Obtener historial de movimientos de un material."""
     return db.query(MovimientoStock).filter(
