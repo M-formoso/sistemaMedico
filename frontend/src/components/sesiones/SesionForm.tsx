@@ -19,10 +19,9 @@ import type { Sesion, SesionCreate, EstadoSesion } from '@/types'
 
 const sesionSchema = z.object({
   paciente_id: z.number({ required_error: 'Selecciona un paciente' }),
-  tratamiento_id: z.number({ required_error: 'Selecciona un tratamiento' }),
+  tratamiento_id: z.number().optional().nullable(),
   fecha: z.string().min(1, 'La fecha es requerida'),
   hora_inicio: z.string().min(1, 'La hora de inicio es requerida'),
-  hora_fin: z.string().optional(),
   estado: z.enum(['programada', 'confirmada', 'en_curso', 'completada', 'cancelada', 'no_asistio']),
   precio_cobrado: z.number().min(0).optional().nullable(),
   descuento_aplicado: z.number().min(0).max(100).optional().nullable(),
@@ -73,10 +72,9 @@ export function SesionForm({ sesion, pacienteId, onSuccess, onCancel }: SesionFo
     resolver: zodResolver(sesionSchema),
     defaultValues: sesion ? {
       paciente_id: sesion.paciente_id,
-      tratamiento_id: sesion.tratamiento_id,
+      tratamiento_id: sesion.tratamiento_id || null,
       fecha: sesion.fecha,
       hora_inicio: sesion.hora_inicio || '',
-      hora_fin: sesion.hora_fin || '',
       estado: sesion.estado,
       precio_cobrado: sesion.precio_cobrado || null,
       descuento_aplicado: sesion.descuento_aplicado || null,
@@ -115,10 +113,9 @@ export function SesionForm({ sesion, pacienteId, onSuccess, onCancel }: SesionFo
     mutationFn: (data: SesionFormData) => {
       const payload: SesionCreate = {
         paciente_id: data.paciente_id,
-        tratamiento_id: data.tratamiento_id,
+        tratamiento_id: data.tratamiento_id || undefined,
         fecha: data.fecha,
         hora_inicio: data.hora_inicio,
-        hora_fin: data.hora_fin || undefined,
         estado: data.estado,
         precio_cobrado: data.precio_cobrado || undefined,
         descuento_aplicado: data.descuento_aplicado || undefined,
@@ -198,15 +195,16 @@ export function SesionForm({ sesion, pacienteId, onSuccess, onCancel }: SesionFo
 
         {/* Tratamiento */}
         <div className="space-y-2">
-          <Label htmlFor="tratamiento_id">Tratamiento *</Label>
+          <Label htmlFor="tratamiento_id">Tratamiento (opcional)</Label>
           <Select
             value={watch('tratamiento_id')?.toString() || ''}
-            onValueChange={(value) => setValue('tratamiento_id', parseInt(value))}
+            onValueChange={(value) => setValue('tratamiento_id', value ? parseInt(value) : null)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Seleccionar tratamiento" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="">Sin tratamiento</SelectItem>
               {tratamientos.map((tratamiento) => (
                 <SelectItem key={tratamiento.id} value={tratamiento.id.toString()}>
                   {tratamiento.nombre} - ${tratamiento.precio_lista?.toLocaleString('es-AR') || 'Sin precio'}
@@ -214,9 +212,6 @@ export function SesionForm({ sesion, pacienteId, onSuccess, onCancel }: SesionFo
               ))}
             </SelectContent>
           </Select>
-          {errors.tratamiento_id && (
-            <p className="text-sm text-red-500">{errors.tratamiento_id.message}</p>
-          )}
         </div>
 
         {/* Fecha */}
@@ -255,7 +250,7 @@ export function SesionForm({ sesion, pacienteId, onSuccess, onCancel }: SesionFo
 
         {/* Hora Inicio */}
         <div className="space-y-2">
-          <Label htmlFor="hora_inicio">Hora Inicio *</Label>
+          <Label htmlFor="hora_inicio">Hora *</Label>
           <Input
             id="hora_inicio"
             type="time"
@@ -266,19 +261,9 @@ export function SesionForm({ sesion, pacienteId, onSuccess, onCancel }: SesionFo
           )}
         </div>
 
-        {/* Hora Fin */}
-        <div className="space-y-2">
-          <Label htmlFor="hora_fin">Hora Fin</Label>
-          <Input
-            id="hora_fin"
-            type="time"
-            {...register('hora_fin')}
-          />
-        </div>
-
         {/* Precio */}
         <div className="space-y-2">
-          <Label htmlFor="precio_cobrado">Precio Cobrado (ARS)</Label>
+          <Label htmlFor="precio_cobrado">Precio (opcional)</Label>
           <Input
             id="precio_cobrado"
             type="number"
@@ -290,7 +275,7 @@ export function SesionForm({ sesion, pacienteId, onSuccess, onCancel }: SesionFo
 
         {/* Descuento */}
         <div className="space-y-2">
-          <Label htmlFor="descuento_aplicado">Descuento (%)</Label>
+          <Label htmlFor="descuento_aplicado">Descuento % (opcional)</Label>
           <Input
             id="descuento_aplicado"
             type="number"

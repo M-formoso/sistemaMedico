@@ -16,7 +16,7 @@ class MaterialUsado(BaseModel):
 class SesionBase(BaseModel):
     """Campos comunes de sesión."""
     paciente_id: int
-    tratamiento_id: int
+    tratamiento_id: Optional[int] = None
     fecha: date
     hora_inicio: Optional[time] = None
     hora_fin: Optional[time] = None

@@ -120,7 +120,7 @@ export interface Sesion {
 
 export interface SesionCreate {
   paciente_id: number
-  tratamiento_id: number
+  tratamiento_id?: number
   fecha: string
   hora_inicio?: string
   hora_fin?: string
