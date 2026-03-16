@@ -55,6 +55,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     navigate('/login')
   }
 
+  // Módulos por defecto para empleados si no tienen permisos asignados
+  const MODULOS_DEFAULT_EMPLEADO = ['pacientes', 'agenda', 'dashboard']
+
   // Filtrar navegación según permisos del usuario
   const navigation = useMemo(() => {
     if (!user) return []
@@ -66,7 +69,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
     // Empleado: filtrar según permisos_modulos
     if (user.rol === 'empleado') {
-      const permisos = user.permisos_modulos || []
+      // Usar permisos asignados o los por defecto
+      const permisos = (user.permisos_modulos && user.permisos_modulos.length > 0)
+        ? user.permisos_modulos
+        : MODULOS_DEFAULT_EMPLEADO
+
       return allNavigation.filter((item) => {
         // Items sin módulo definido (Usuarios, Configuración) solo para admins
         if (item.modulo === null) return false

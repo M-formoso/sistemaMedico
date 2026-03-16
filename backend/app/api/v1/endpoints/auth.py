@@ -13,7 +13,7 @@ from app.core.security import (
     decodificar_token,
     hashear_password,
 )
-from app.models.usuario import Usuario
+from app.models.usuario import Usuario, RolUsuario, MODULOS_ADMIN, MODULOS_DEFAULT_EMPLEADO, MODULOS_DEFAULT_PACIENTE
 from app.schemas.auth import Token, TokenRefresh, UsuarioResponse, CambioPassword
 from app.api.deps import get_current_user
 
@@ -98,7 +98,25 @@ def get_me(current_user: Usuario = Depends(get_current_user)) -> Any:
     """
     Obtener datos del usuario actual.
     """
-    return current_user
+    # Determinar permisos según rol
+    if current_user.rol == RolUsuario.ADMINISTRADORA:
+        permisos = list(MODULOS_ADMIN.keys())
+    elif current_user.rol == RolUsuario.EMPLEADO:
+        permisos = current_user.permisos_modulos or list(MODULOS_DEFAULT_EMPLEADO)
+    else:  # PACIENTE
+        permisos = current_user.permisos_modulos or list(MODULOS_DEFAULT_PACIENTE)
+
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "nombre": current_user.nombre,
+        "rol": current_user.rol,
+        "paciente_id": current_user.paciente_id,
+        "permisos_modulos": permisos,
+        "activo": current_user.activo,
+        "ultimo_acceso": current_user.ultimo_acceso,
+        "created_at": current_user.created_at,
+    }
 
 
 @router.put("/change-password")
