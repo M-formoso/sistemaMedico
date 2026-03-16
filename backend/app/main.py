@@ -9,9 +9,25 @@ from app.api.v1.api import api_router
 print("Starting FastAPI app...")
 
 
+def run_migrations():
+    """Ejecutar migraciones de Alembic automáticamente."""
+    try:
+        from alembic.config import Config
+        from alembic import command
+
+        alembic_cfg = Config("alembic.ini")
+        command.upgrade(alembic_cfg, "head")
+        print("Migrations completed successfully")
+    except Exception as e:
+        print(f"Error running migrations: {e}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: inicializar base de datos con usuario admin
+    # Startup: ejecutar migraciones y luego inicializar base de datos
+    print("Running database migrations...")
+    run_migrations()
+
     try:
         from app.db.session import SessionLocal
         from app.db.init_db import init_db
