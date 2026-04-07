@@ -169,11 +169,13 @@ export function PacienteForm({ paciente, onSuccess, onCancel }: PacienteFormProp
             type="date"
             {...register('fecha_nacimiento')}
           />
-          {watch('fecha_nacimiento') && calcularEdad(watch('fecha_nacimiento')) !== null && (
-            <p className="text-sm text-gray-600">
-              Edad: <span className="font-medium">{calcularEdad(watch('fecha_nacimiento'))} años</span>
-            </p>
-          )}
+          <p className="text-sm text-gray-600">
+            Edad: <span className="font-medium">
+              {watch('fecha_nacimiento') && calcularEdad(watch('fecha_nacimiento')) !== null
+                ? `${calcularEdad(watch('fecha_nacimiento'))} años`
+                : '--'}
+            </span>
+          </p>
         </div>
 
         {/* Teléfono */}
