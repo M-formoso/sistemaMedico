@@ -197,14 +197,14 @@ export function SesionForm({ sesion, pacienteId, onSuccess, onCancel }: SesionFo
         <div className="space-y-2">
           <Label htmlFor="tratamiento_id">Tratamiento (opcional)</Label>
           <Select
-            value={watch('tratamiento_id')?.toString() || ''}
-            onValueChange={(value) => setValue('tratamiento_id', value ? parseInt(value) : null)}
+            value={watch('tratamiento_id')?.toString() || 'none'}
+            onValueChange={(value) => setValue('tratamiento_id', value === 'none' ? null : parseInt(value))}
           >
             <SelectTrigger>
               <SelectValue placeholder="Seleccionar tratamiento" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Sin tratamiento</SelectItem>
+              <SelectItem value="none">Sin tratamiento</SelectItem>
               {tratamientos.map((tratamiento) => (
                 <SelectItem key={tratamiento.id} value={tratamiento.id.toString()}>
                   {tratamiento.nombre} - ${tratamiento.precio_lista?.toLocaleString('es-AR') || 'Sin precio'}
