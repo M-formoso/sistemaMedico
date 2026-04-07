@@ -28,6 +28,24 @@ const pacienteSchema = z.object({
 
 type PacienteFormData = z.infer<typeof pacienteSchema>
 
+// Función para calcular la edad a partir de la fecha de nacimiento
+function calcularEdad(fechaNacimiento: string | undefined): number | null {
+  if (!fechaNacimiento) return null
+  const hoy = new Date()
+  const nacimiento = new Date(fechaNacimiento)
+  if (isNaN(nacimiento.getTime())) return null
+
+  let edad = hoy.getFullYear() - nacimiento.getFullYear()
+  const mesActual = hoy.getMonth()
+  const mesNacimiento = nacimiento.getMonth()
+
+  if (mesActual < mesNacimiento || (mesActual === mesNacimiento && hoy.getDate() < nacimiento.getDate())) {
+    edad--
+  }
+
+  return edad >= 0 ? edad : null
+}
+
 interface PacienteFormProps {
   paciente?: Paciente
   onSuccess?: () => void
@@ -151,6 +169,11 @@ export function PacienteForm({ paciente, onSuccess, onCancel }: PacienteFormProp
             type="date"
             {...register('fecha_nacimiento')}
           />
+          {watch('fecha_nacimiento') && calcularEdad(watch('fecha_nacimiento')) !== null && (
+            <p className="text-sm text-gray-600">
+              Edad: <span className="font-medium">{calcularEdad(watch('fecha_nacimiento'))} años</span>
+            </p>
+          )}
         </div>
 
         {/* Teléfono */}
