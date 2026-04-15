@@ -140,7 +140,8 @@ def eliminar_evolucion(
     evolucion = db.query(Evolucion).filter(Evolucion.id == evolucion_id).first()
 
     if not evolucion:
-        raise HTTPException(status_code=404, detail="Evolución no encontrada")
+        raise HTTPException(status_code=404, detail=f"Evolución con ID {evolucion_id} no encontrada")
 
     db.delete(evolucion)
     db.commit()
+    return None
