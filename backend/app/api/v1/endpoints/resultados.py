@@ -3,10 +3,10 @@ from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
 
 from app.db.session import get_db
-from app.api.deps import get_current_admin
+from app.api.deps import require_modulo
 from app.models.resultado import Resultado
 from app.models.paciente import Paciente
 from app.models.estudio import Estudio
@@ -65,6 +65,16 @@ class ResultadoResponse(ResultadoBase):
     class Config:
         from_attributes = True
 
+    @field_serializer('created_at')
+    def serialize_created_at(self, value: Optional[datetime]) -> Optional[str]:
+        if value:
+            return value.isoformat()
+        return None
+
+    @field_serializer('fecha')
+    def serialize_fecha(self, value: date) -> str:
+        return value.isoformat()
+
 
 @router.get("/paciente/{paciente_id}", response_model=List[ResultadoResponse])
 def listar_resultados_paciente(
@@ -72,7 +82,7 @@ def listar_resultados_paciente(
     skip: int = 0,
     limit: int = 50,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Listar resultados de un paciente."""
     resultados = db.query(Resultado).filter(
@@ -86,7 +96,7 @@ def listar_resultados_paciente(
 def listar_resultados_estudio(
     estudio_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Listar resultados de un estudio específico."""
     resultados = db.query(Resultado).filter(
@@ -100,7 +110,7 @@ def listar_resultados_estudio(
 def crear_resultado(
     data: ResultadoCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Crear nuevo resultado."""
     paciente = db.query(Paciente).filter(Paciente.id == data.paciente_id).first()
@@ -127,7 +137,7 @@ def crear_resultado(
 def obtener_resultado(
     resultado_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Obtener un resultado por ID."""
     resultado = db.query(Resultado).filter(Resultado.id == resultado_id).first()
@@ -143,7 +153,7 @@ def actualizar_resultado(
     resultado_id: int,
     data: ResultadoUpdate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Actualizar un resultado."""
     resultado = db.query(Resultado).filter(Resultado.id == resultado_id).first()
@@ -165,7 +175,7 @@ def actualizar_resultado(
 def eliminar_resultado(
     resultado_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Eliminar un resultado."""
     resultado = db.query(Resultado).filter(Resultado.id == resultado_id).first()
@@ -175,6 +185,7 @@ def eliminar_resultado(
 
     db.delete(resultado)
     db.commit()
+    return None
 
 
 @router.post("/con-archivo", response_model=ResultadoResponse, status_code=status.HTTP_201_CREATED)
@@ -187,7 +198,7 @@ async def crear_resultado_con_archivo(
     estudio_id: Optional[int] = Form(None),
     file: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Crear nuevo resultado con archivo adjunto opcional."""
     paciente = db.query(Paciente).filter(Paciente.id == paciente_id).first()
@@ -253,7 +264,7 @@ async def subir_archivo_resultado(
     resultado_id: int,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Subir archivo para un resultado existente."""
     resultado = db.query(Resultado).filter(Resultado.id == resultado_id).first()

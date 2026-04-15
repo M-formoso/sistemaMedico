@@ -3,10 +3,10 @@ from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
 
 from app.db.session import get_db
-from app.api.deps import get_current_admin
+from app.api.deps import require_modulo
 from app.models.consentimiento import Consentimiento, TipoConsentimiento
 from app.models.paciente import Paciente
 from app.models.tratamiento import Tratamiento
@@ -67,6 +67,24 @@ class ConsentimientoResponse(ConsentimientoBase):
     class Config:
         from_attributes = True
 
+    @field_serializer('created_at')
+    def serialize_created_at(self, value: Optional[datetime]) -> Optional[str]:
+        if value:
+            return value.isoformat()
+        return None
+
+    @field_serializer('fecha_firma')
+    def serialize_fecha_firma(self, value: Optional[date]) -> Optional[str]:
+        if value:
+            return value.isoformat()
+        return None
+
+    @field_serializer('fecha_vencimiento')
+    def serialize_fecha_vencimiento(self, value: Optional[date]) -> Optional[str]:
+        if value:
+            return value.isoformat()
+        return None
+
 
 @router.get("/paciente/{paciente_id}", response_model=List[ConsentimientoResponse])
 def listar_consentimientos_paciente(
@@ -76,7 +94,7 @@ def listar_consentimientos_paciente(
     skip: int = 0,
     limit: int = 50,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Listar consentimientos de un paciente."""
     query = db.query(Consentimiento).filter(Consentimiento.paciente_id == paciente_id)
@@ -93,7 +111,7 @@ def listar_consentimientos_paciente(
 @router.get("/pendientes", response_model=List[ConsentimientoResponse])
 def listar_consentimientos_pendientes(
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Listar todos los consentimientos pendientes de firma."""
     consentimientos = db.query(Consentimiento).filter(
@@ -107,7 +125,7 @@ def listar_consentimientos_pendientes(
 def crear_consentimiento(
     data: ConsentimientoCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Crear nuevo consentimiento."""
     paciente = db.query(Paciente).filter(Paciente.id == data.paciente_id).first()
@@ -134,7 +152,7 @@ def crear_consentimiento(
 def obtener_consentimiento(
     consentimiento_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Obtener un consentimiento por ID."""
     consentimiento = db.query(Consentimiento).filter(Consentimiento.id == consentimiento_id).first()
@@ -150,7 +168,7 @@ def actualizar_consentimiento(
     consentimiento_id: int,
     data: ConsentimientoUpdate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Actualizar un consentimiento."""
     consentimiento = db.query(Consentimiento).filter(Consentimiento.id == consentimiento_id).first()
@@ -172,7 +190,7 @@ def actualizar_consentimiento(
 def firmar_consentimiento(
     consentimiento_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Marcar un consentimiento como firmado."""
     consentimiento = db.query(Consentimiento).filter(Consentimiento.id == consentimiento_id).first()
@@ -193,7 +211,7 @@ def firmar_consentimiento(
 def eliminar_consentimiento(
     consentimiento_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Eliminar un consentimiento."""
     consentimiento = db.query(Consentimiento).filter(Consentimiento.id == consentimiento_id).first()
@@ -203,6 +221,7 @@ def eliminar_consentimiento(
 
     db.delete(consentimiento)
     db.commit()
+    return None
 
 
 @router.post("/{consentimiento_id}/upload", response_model=ConsentimientoResponse)
@@ -210,7 +229,7 @@ async def subir_archivo_consentimiento(
     consentimiento_id: int,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Subir archivo para un consentimiento existente."""
     consentimiento = db.query(Consentimiento).filter(Consentimiento.id == consentimiento_id).first()
@@ -259,7 +278,7 @@ async def crear_consentimiento_con_archivo(
     fecha_vencimiento: Optional[str] = Form(None),
     file: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Crear nuevo consentimiento con archivo adjunto opcional."""
     paciente = db.query(Paciente).filter(Paciente.id == paciente_id).first()

@@ -1,12 +1,12 @@
 from typing import List, Optional
-from datetime import date
+from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
 
 from app.db.session import get_db
-from app.api.deps import get_current_admin
+from app.api.deps import require_modulo
 from app.models.estudio import Estudio, BateriaEstudios, EstadoEstudio
 from app.models.paciente import Paciente
 
@@ -40,10 +40,26 @@ class EstudioUpdate(BaseModel):
 class EstudioResponse(EstudioBase):
     id: int
     paciente_id: int
-    created_at: Optional[str] = None
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
+
+    @field_serializer('created_at')
+    def serialize_created_at(self, value: Optional[datetime]) -> Optional[str]:
+        if value:
+            return value.isoformat()
+        return None
+
+    @field_serializer('fecha_solicitud')
+    def serialize_fecha_solicitud(self, value: date) -> str:
+        return value.isoformat()
+
+    @field_serializer('fecha_realizacion')
+    def serialize_fecha_realizacion(self, value: Optional[date]) -> Optional[str]:
+        if value:
+            return value.isoformat()
+        return None
 
 
 # Batería de estudios schemas
@@ -67,10 +83,16 @@ class BateriaEstudiosUpdate(BaseModel):
 
 class BateriaEstudiosResponse(BateriaEstudiosBase):
     id: int
-    created_at: Optional[str] = None
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
+
+    @field_serializer('created_at')
+    def serialize_created_at(self, value: Optional[datetime]) -> Optional[str]:
+        if value:
+            return value.isoformat()
+        return None
 
 
 # Endpoints de Estudios
@@ -81,7 +103,7 @@ def listar_estudios_paciente(
     skip: int = 0,
     limit: int = 50,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Listar estudios de un paciente."""
     query = db.query(Estudio).filter(Estudio.paciente_id == paciente_id)
@@ -97,7 +119,7 @@ def listar_estudios_paciente(
 def crear_estudio(
     data: EstudioCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Crear nuevo estudio para un paciente."""
     paciente = db.query(Paciente).filter(Paciente.id == data.paciente_id).first()
@@ -121,7 +143,7 @@ def crear_estudios_desde_bateria(
     bateria_id: int,
     fecha_solicitud: date,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Crear múltiples estudios desde una batería predefinida."""
     paciente = db.query(Paciente).filter(Paciente.id == paciente_id).first()
@@ -155,7 +177,7 @@ def crear_estudios_desde_bateria(
 def obtener_estudio(
     estudio_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Obtener un estudio por ID."""
     estudio = db.query(Estudio).filter(Estudio.id == estudio_id).first()
@@ -171,7 +193,7 @@ def actualizar_estudio(
     estudio_id: int,
     data: EstudioUpdate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Actualizar un estudio."""
     estudio = db.query(Estudio).filter(Estudio.id == estudio_id).first()
@@ -193,7 +215,7 @@ def actualizar_estudio(
 def eliminar_estudio(
     estudio_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Eliminar un estudio."""
     estudio = db.query(Estudio).filter(Estudio.id == estudio_id).first()
@@ -203,6 +225,7 @@ def eliminar_estudio(
 
     db.delete(estudio)
     db.commit()
+    return None
 
 
 # Endpoints de Baterías de Estudios
@@ -210,7 +233,7 @@ def eliminar_estudio(
 def listar_baterias(
     activo: Optional[bool] = True,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Listar baterías de estudios."""
     query = db.query(BateriaEstudios)
@@ -223,7 +246,7 @@ def listar_baterias(
 def crear_bateria(
     data: BateriaEstudiosCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Crear nueva batería de estudios."""
     # Verificar que no existe otra con el mismo nombre
@@ -247,7 +270,7 @@ def actualizar_bateria(
     bateria_id: int,
     data: BateriaEstudiosUpdate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Actualizar una batería de estudios."""
     bateria = db.query(BateriaEstudios).filter(BateriaEstudios.id == bateria_id).first()
@@ -269,7 +292,7 @@ def actualizar_bateria(
 def eliminar_bateria(
     bateria_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_admin)
+    current_user=Depends(require_modulo('historia_clinica'))
 ):
     """Eliminar una batería de estudios."""
     bateria = db.query(BateriaEstudios).filter(BateriaEstudios.id == bateria_id).first()
@@ -279,3 +302,4 @@ def eliminar_bateria(
 
     db.delete(bateria)
     db.commit()
+    return None
