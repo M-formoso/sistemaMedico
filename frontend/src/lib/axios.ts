@@ -2,25 +2,26 @@ import axios from 'axios'
 import { useAuthStore } from '@/stores/authStore'
 
 /**
- * Configuración de API - v2.0
+ * Configuración de API - v3.0
  * IMPORTANTE: En producción SIEMPRE usar HTTPS
+ * Última actualización: 2026-04-15
  */
+const API_BASE_URL_PRODUCTION = 'https://backend-production-240c3.up.railway.app/api/v1'
+const API_BASE_URL_LOCAL = 'http://localhost:8000/api/v1'
+
 const getApiBaseUrl = (): string => {
   // En el navegador, detectar el entorno
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname
+    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1'
 
-    // Desarrollo local
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return 'http://localhost:8000/api/v1'
-    }
-
-    // Producción - Railway
-    return 'https://backend-production-240c3.up.railway.app/api/v1'
+    const url = isLocal ? API_BASE_URL_LOCAL : API_BASE_URL_PRODUCTION
+    console.log('[API] Base URL:', url, '| Host:', hostname)
+    return url
   }
 
   // SSR fallback
-  return 'https://backend-production-240c3.up.railway.app/api/v1'
+  return API_BASE_URL_PRODUCTION
 }
 
 const api = axios.create({
