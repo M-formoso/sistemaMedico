@@ -86,17 +86,19 @@ railway_domain = os.getenv("RAILWAY_PUBLIC_DOMAIN", "")
 if railway_domain:
     origins.append(f"https://{railway_domain}")
 
+# Middleware para manejar headers de proxy (Railway)
+# Esto asegura que las URLs generadas usen HTTPS
+# IMPORTANTE: Se agrega ANTES de CORS para que se ejecute DESPUÉS (Starlette invierte el orden)
+app.add_middleware(ProxyHeadersMiddleware)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
-
-# Middleware para manejar headers de proxy (Railway)
-# Esto asegura que las URLs generadas usen HTTPS
-app.add_middleware(ProxyHeadersMiddleware)
 
 # Routers
 app.include_router(api_router, prefix="/api/v1")

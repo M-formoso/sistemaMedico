@@ -1,9 +1,9 @@
 from typing import List, Optional
-from datetime import date
+from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
 
 from app.db.session import get_db
 from app.api.deps import require_modulo
@@ -27,6 +27,7 @@ class EvolucionCreate(EvolucionBase):
 
 
 class EvolucionUpdate(BaseModel):
+    fecha: Optional[date] = None
     titulo: Optional[str] = None
     descripcion: Optional[str] = None
     peso: Optional[str] = None
@@ -36,10 +37,20 @@ class EvolucionUpdate(BaseModel):
 class EvolucionResponse(EvolucionBase):
     id: int
     paciente_id: int
-    created_at: Optional[str] = None
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
+
+    @field_serializer('created_at')
+    def serialize_datetime(self, value: Optional[datetime]) -> Optional[str]:
+        if value:
+            return value.isoformat()
+        return None
+
+    @field_serializer('fecha')
+    def serialize_fecha(self, value: date) -> str:
+        return value.isoformat()
 
 
 @router.get("/paciente/{paciente_id}", response_model=List[EvolucionResponse])
