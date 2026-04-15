@@ -16,6 +16,7 @@ import { tratamientosService } from '@/services/tratamientosService'
 import { materialesService } from '@/services/materialesService'
 import { toast } from '@/hooks/useToast'
 import type { Sesion, SesionCreate, EstadoSesion } from '@/types'
+import { obtenerFechaLocalISO } from '@/utils/formatters'
 
 const sesionSchema = z.object({
   paciente_id: z.number({ required_error: 'Selecciona un paciente' }),
@@ -87,7 +88,7 @@ export function SesionForm({ sesion, pacienteId, onSuccess, onCancel }: SesionFo
     } : {
       paciente_id: pacienteId,
       estado: 'programada' as EstadoSesion,
-      fecha: new Date().toISOString().split('T')[0],
+      fecha: obtenerFechaLocalISO(),
       materiales: [],
     },
   })

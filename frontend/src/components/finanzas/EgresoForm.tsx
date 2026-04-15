@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { egresosService } from '@/services/egresosService'
 import { toast } from '@/hooks/useToast'
 import type { Egreso, EgresoCreate, CategoriaEgreso, MetodoPago } from '@/types'
+import { obtenerFechaLocalISO } from '@/utils/formatters'
 
 const egresoSchema = z.object({
   concepto: z.string().min(1, 'El concepto es requerido'),
@@ -57,7 +58,7 @@ export function EgresoForm({ egreso, onSuccess, onCancel }: EgresoFormProps) {
       : {
           categoria: 'otros' as CategoriaEgreso,
           metodo_pago: 'efectivo' as MetodoPago,
-          fecha: new Date().toISOString().split('T')[0],
+          fecha: obtenerFechaLocalISO(),
         },
   })
 

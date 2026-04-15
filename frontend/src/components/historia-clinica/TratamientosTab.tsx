@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Progress } from '@/components/ui/progress'
 import api from '@/lib/axios'
-import { formatearFecha, formatearMonto } from '@/utils/formatters'
+import { formatearFecha, formatearMonto, obtenerFechaLocalISO } from '@/utils/formatters'
 import { toast } from '@/hooks/useToast'
 
 interface TratamientosTabProps {
@@ -87,7 +87,7 @@ export function TratamientosTab({ pacienteId }: TratamientosTabProps) {
   const [editando, setEditando] = useState<TratamientoPaciente | null>(null)
   const [formData, setFormData] = useState<FormData>({
     tratamiento_id: null,
-    fecha_inicio: new Date().toISOString().split('T')[0],
+    fecha_inicio: obtenerFechaLocalISO(),
     fecha_fin_estimada: '',
     sesiones_planificadas: 1,
     precio_acordado: '',
@@ -162,7 +162,7 @@ export function TratamientosTab({ pacienteId }: TratamientosTabProps) {
     setEditando(null)
     setFormData({
       tratamiento_id: null,
-      fecha_inicio: new Date().toISOString().split('T')[0],
+      fecha_inicio: obtenerFechaLocalISO(),
       fecha_fin_estimada: '',
       sesiones_planificadas: 1,
       precio_acordado: '',

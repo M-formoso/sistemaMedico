@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/table'
 import { presupuestosService, Presupuesto, PresupuestoCreate, ItemPresupuesto } from '@/services/presupuestosService'
 import { pacientesService } from '@/services/pacientesService'
-import { formatearFecha, formatearMonto } from '@/utils/formatters'
+import { formatearFecha, formatearMonto, obtenerFechaLocalISO } from '@/utils/formatters'
 import { toast } from '@/hooks/useToast'
 
 const estadoConfig = {
@@ -51,7 +51,7 @@ export default function PresupuestosPage() {
   const [items, setItems] = useState<ItemPresupuesto[]>([])
   const [nuevoItem, setNuevoItem] = useState({ descripcion: '', cantidad: 1, precio_unitario: 0 })
   const [formData, setFormData] = useState({
-    fecha: new Date().toISOString().split('T')[0],
+    fecha: obtenerFechaLocalISO(),
     valido_hasta: '',
     notas: '',
     condiciones: '',
@@ -117,7 +117,7 @@ export default function PresupuestosPage() {
     setItems([])
     setNuevoItem({ descripcion: '', cantidad: 1, precio_unitario: 0 })
     setFormData({
-      fecha: new Date().toISOString().split('T')[0],
+      fecha: obtenerFechaLocalISO(),
       valido_hasta: '',
       notas: '',
       condiciones: '',

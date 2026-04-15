@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { historiaClinicaService, Estudio, EstudioCreate, BateriaEstudios } from '@/services/historiaClinicaService'
-import { formatearFecha } from '@/utils/formatters'
+import { formatearFecha, obtenerFechaLocalISO } from '@/utils/formatters'
 import { toast } from '@/hooks/useToast'
 
 interface EstudiosTabProps {
@@ -33,7 +33,7 @@ export function EstudiosTab({ pacienteId }: EstudiosTabProps) {
     nombre: '',
     descripcion: '',
     indicaciones: '',
-    fecha_solicitud: new Date().toISOString().split('T')[0],
+    fecha_solicitud: obtenerFechaLocalISO(),
     estado: 'pendiente',
   })
   const [bateriaSeleccionada, setBateriaSeleccionada] = useState<number | null>(null)
@@ -103,7 +103,7 @@ export function EstudiosTab({ pacienteId }: EstudiosTabProps) {
       nombre: '',
       descripcion: '',
       indicaciones: '',
-      fecha_solicitud: new Date().toISOString().split('T')[0],
+      fecha_solicitud: obtenerFechaLocalISO(),
       estado: 'pendiente',
     })
     setIsDialogOpen(true)
@@ -142,7 +142,7 @@ export function EstudiosTab({ pacienteId }: EstudiosTabProps) {
         nombre: formData.nombre,
         descripcion: formData.descripcion,
         indicaciones: formData.indicaciones,
-        fecha_solicitud: formData.fecha_solicitud || new Date().toISOString().split('T')[0],
+        fecha_solicitud: formData.fecha_solicitud || obtenerFechaLocalISO(),
         estado: formData.estado,
       })
     }
@@ -155,7 +155,7 @@ export function EstudiosTab({ pacienteId }: EstudiosTabProps) {
     }
     crearDesdeBateriaMutation.mutate({
       bateriaId: bateriaSeleccionada,
-      fecha: new Date().toISOString().split('T')[0],
+      fecha: obtenerFechaLocalISO(),
     })
   }
 

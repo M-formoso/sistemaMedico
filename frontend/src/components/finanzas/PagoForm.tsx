@@ -13,6 +13,7 @@ import { pacientesService } from '@/services/pacientesService'
 import { sesionesService } from '@/services/sesionesService'
 import { toast } from '@/hooks/useToast'
 import type { Pago, PagoCreate, MetodoPago } from '@/types'
+import { obtenerFechaLocalISO } from '@/utils/formatters'
 
 const pagoSchema = z.object({
   paciente_id: z.number({ required_error: 'Selecciona un paciente' }),
@@ -65,7 +66,7 @@ export function PagoForm({ pago, pacienteId, sesionId, onSuccess, onCancel }: Pa
           paciente_id: pacienteId,
           sesion_id: sesionId || null,
           metodo_pago: 'efectivo' as MetodoPago,
-          fecha: new Date().toISOString().split('T')[0],
+          fecha: obtenerFechaLocalISO(),
         },
   })
 

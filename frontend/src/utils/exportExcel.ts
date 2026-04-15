@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx'
+import { obtenerFechaLocalISO } from './formatters'
 
 export interface ExportColumn<T> {
   header: string
@@ -39,7 +40,7 @@ export function exportToExcel<T>(
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Reporte')
 
   // Generar nombre de archivo con fecha
-  const date = new Date().toISOString().split('T')[0]
+  const date = obtenerFechaLocalISO()
   XLSX.writeFile(workbook, `${filename}_${date}.xlsx`)
 }
 
@@ -57,6 +58,6 @@ export function exportMultipleSheetsToExcel(
     XLSX.utils.book_append_sheet(workbook, worksheet, sheet.name)
   })
 
-  const date = new Date().toISOString().split('T')[0]
+  const date = obtenerFechaLocalISO()
   XLSX.writeFile(workbook, `${filename}_${date}.xlsx`)
 }

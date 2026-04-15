@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { pacientesService } from '@/services/pacientesService'
 import { sesionesService } from '@/services/sesionesService'
 import { turnosRecurrentesService } from '@/services/turnosRecurrentesService'
-import { formatearFecha, formatearMonto } from '@/utils/formatters'
+import { formatearFecha, formatearMonto, obtenerFechaLocalISO } from '@/utils/formatters'
 import { HistoriaClinicaTabs } from '@/components/historia-clinica/HistoriaClinicaTabs'
 import { toast } from '@/hooks/useToast'
 import type { Paciente, Sesion } from '@/types'
@@ -92,7 +92,7 @@ export function PacienteDetail({ pacienteId }: PacienteDetailProps) {
   })
 
   // Obtener próximos turnos (sesiones programadas a partir de hoy)
-  const hoy = new Date().toISOString().split('T')[0]
+  const hoy = obtenerFechaLocalISO()
   const { data: proximosTurnos = [] } = useQuery({
     queryKey: ['sesiones', 'proximas', pacienteId],
     queryFn: () => sesionesService.listar({

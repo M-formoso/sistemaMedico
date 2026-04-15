@@ -31,3 +31,15 @@ export const formatearPorcentaje = (valor: number): string => {
     maximumFractionDigits: 2,
   }).format(valor / 100)
 }
+
+/**
+ * Obtiene la fecha actual en formato YYYY-MM-DD usando la zona horaria local.
+ * Importante: NO usar new Date().toISOString().split('T')[0] porque usa UTC
+ * y en Argentina (UTC-3) puede devolver el día anterior/siguiente.
+ */
+export const obtenerFechaLocalISO = (fecha: Date = new Date()): string => {
+  const year = fecha.getFullYear()
+  const month = String(fecha.getMonth() + 1).padStart(2, '0')
+  const day = String(fecha.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}

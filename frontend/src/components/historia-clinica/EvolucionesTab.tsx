@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { historiaClinicaService, Evolucion, EvolucionCreate } from '@/services/historiaClinicaService'
-import { formatearFecha } from '@/utils/formatters'
+import { formatearFecha, obtenerFechaLocalISO } from '@/utils/formatters'
 import { toast } from '@/hooks/useToast'
 
 interface EvolucionesTabProps {
@@ -20,7 +20,7 @@ export function EvolucionesTab({ pacienteId }: EvolucionesTabProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editando, setEditando] = useState<Evolucion | null>(null)
   const [formData, setFormData] = useState<Partial<EvolucionCreate>>({
-    fecha: new Date().toISOString().split('T')[0],
+    fecha: obtenerFechaLocalISO(),
     titulo: '',
     descripcion: '',
   })
@@ -69,7 +69,7 @@ export function EvolucionesTab({ pacienteId }: EvolucionesTabProps) {
   const abrirNueva = () => {
     setEditando(null)
     setFormData({
-      fecha: new Date().toISOString().split('T')[0],
+      fecha: obtenerFechaLocalISO(),
       titulo: '',
       descripcion: '',
     })
@@ -104,7 +104,7 @@ export function EvolucionesTab({ pacienteId }: EvolucionesTabProps) {
     } else {
       crearMutation.mutate({
         paciente_id: pacienteId,
-        fecha: formData.fecha || new Date().toISOString().split('T')[0],
+        fecha: formData.fecha || obtenerFechaLocalISO(),
         descripcion: formData.descripcion,
         titulo: formData.titulo,
       })

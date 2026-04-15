@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Calendar, Clock, MapPin, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 import api from '@/lib/axios'
-import { formatearFecha } from '@/utils/formatters'
+import { formatearFecha, obtenerFechaLocalISO } from '@/utils/formatters'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -27,7 +27,7 @@ export default function PortalTurnos() {
     },
   })
 
-  const hoy = new Date().toISOString().split('T')[0]
+  const hoy = obtenerFechaLocalISO()
 
   const proximosTurnos = sesiones.filter(
     (s) =>

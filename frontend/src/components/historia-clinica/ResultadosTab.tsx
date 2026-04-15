@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { historiaClinicaService, Resultado, ResultadoCreate } from '@/services/historiaClinicaService'
-import { formatearFecha } from '@/utils/formatters'
+import { formatearFecha, obtenerFechaLocalISO } from '@/utils/formatters'
 import { toast } from '@/hooks/useToast'
 
 interface ResultadosTabProps {
@@ -22,7 +22,7 @@ export function ResultadosTab({ pacienteId }: ResultadosTabProps) {
   const [formData, setFormData] = useState<Partial<ResultadoCreate>>({
     nombre: '',
     descripcion: '',
-    fecha: new Date().toISOString().split('T')[0],
+    fecha: obtenerFechaLocalISO(),
     notas: '',
   })
   const [archivoSeleccionado, setArchivoSeleccionado] = useState<File | null>(null)
@@ -76,7 +76,7 @@ export function ResultadosTab({ pacienteId }: ResultadosTabProps) {
     setFormData({
       nombre: '',
       descripcion: '',
-      fecha: new Date().toISOString().split('T')[0],
+      fecha: obtenerFechaLocalISO(),
       notas: '',
     })
     setArchivoSeleccionado(null)
@@ -148,7 +148,7 @@ export function ResultadosTab({ pacienteId }: ResultadosTabProps) {
           paciente_id: pacienteId,
           nombre: formData.nombre,
           descripcion: formData.descripcion,
-          fecha: formData.fecha || new Date().toISOString().split('T')[0],
+          fecha: formData.fecha || obtenerFechaLocalISO(),
           notas: formData.notas,
         },
         archivo: archivoSeleccionado || undefined,
