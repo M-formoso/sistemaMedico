@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
 from contextlib import asynccontextmanager
 import os
 
@@ -7,6 +10,19 @@ from app.core.config import settings
 from app.api.v1.api import api_router
 
 print("Starting FastAPI app...")
+
+
+class ProxyHeadersMiddleware(BaseHTTPMiddleware):
+    """Middleware para manejar headers de proxy (Railway, etc.)
+    Asegura que las URLs generadas usen HTTPS cuando están detrás de un proxy.
+    """
+    async def dispatch(self, request: Request, call_next):
+        # Railway y otros proxies envían X-Forwarded-Proto
+        forwarded_proto = request.headers.get("x-forwarded-proto")
+        if forwarded_proto == "https":
+            # Forzar el scope a usar HTTPS
+            request.scope["scheme"] = "https"
+        return await call_next(request)
 
 
 def run_migrations():
@@ -77,6 +93,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Middleware para manejar headers de proxy (Railway)
+# Esto asegura que las URLs generadas usen HTTPS
+app.add_middleware(ProxyHeadersMiddleware)
 
 # Routers
 app.include_router(api_router, prefix="/api/v1")
