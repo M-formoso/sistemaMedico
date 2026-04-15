@@ -55,6 +55,9 @@ origins = [
     "http://localhost:5173",
     "http://localhost:3000",
     "http://127.0.0.1:5173",
+    # Dominios de producción en Railway
+    "https://sistemamedico-production-860d.up.railway.app",
+    "https://draformosomedicinaestetic-production.up.railway.app",
 ]
 
 # Agregar FRONTEND_URL si está configurado
